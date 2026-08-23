@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <title>すきなうた</title>
+  <style>
+    :root{
+      --bg:#070707;
+      --panel:#11110f;
+      --panel2:#171715;
+      --text:#f6f1e8;
+      --muted:#aaa39a;
+      --line:#6b5323;
+      --gold:#d8a73e;
+      --gold2:#f1c664;
+      --gold3:#8f6722;
+      --danger:#d86957;
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    html{background:#050505}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+      color:var(--text);
+      -webkit-text-size-adjust:100%;
+      background:
+        radial-gradient(circle at 82% 8%, rgba(220,165,55,.10), transparent 20%),
+        radial-gradient(circle at 10% 74%, rgba(220,165,55,.08), transparent 22%),
+        linear-gradient(180deg,#080808 0%,#0b0b0a 55%,#050505 100%);
+      position:relative;
+      overflow-x:hidden;
+    }
+    body::before,
+    body::after{
+      content:"";
+      position:fixed;
+      width:420px;
+      height:420px;
+      border-radius:50%;
+      pointer-events:none;
+      opacity:.18;
+      z-index:0;
+      background:
+        repeating-radial-gradient(circle at center,
+          rgba(255,255,255,.18) 0 1px,
+          rgba(0,0,0,0) 2px 8px),
+        radial-gradient(circle at center,#0e0e0e 0 61%,#1d1b17 62% 64%,#050505 65%);
+      box-shadow:inset 0 0 80px rgba(0,0,0,.75);
+    }
+    body::before{left:-280px;top:-120px}
+    body::after{right:-300px;bottom:-140px}
+
+    .wrap{
+      max-width:720px;
+      margin:0 auto;
+      position:relative;
+      z-index:1;
+      padding:calc(22px + env(safe-area-inset-top)) 14px calc(34px + env(safe-area-inset-bottom));
+    }
+    .brand{
+      text-align:center;
+      margin:4px 0 22px;
+    }
+    .vinyl-mark{
+      width:72px;
+      height:72px;
+      margin:0 auto 10px;
+      border-radius:50%;
+      border:2px solid var(--gold2);
+      background:
+        radial-gradient(circle,#0a0a0a 0 7%,var(--gold2) 8% 16%,#171717 17% 22%,#070707 23% 100%),
+        repeating-radial-gradient(circle at center,rgba(255,255,255,.18) 0 1px,transparent 2px 6px);
+      box-shadow:0 0 22px rgba(216,167,62,.16);
+      position:relative;
+    }
+    .vinyl-mark::after{
+      content:"♪";
+      position:absolute;
+      right:-5px;
+      top:-14px;
+      font-size:38px;
+      line-height:1;
+      color:var(--gold2);
+      text-shadow:0 2px 8px rgba(0,0,0,.5);
+    }
+    h1{
+      font-family:Georgia,"Times New Roman",serif;
+      letter-spacing:.18em;
+      font-size:30px;
+      margin:0;
+      color:var(--gold2);
+      font-weight:700;
+      text-shadow:0 2px 12px rgba(216,167,62,.16);
+    }
+    .brand-line{
+      width:230px;
+      height:1px;
+      margin:10px auto 0;
+      background:linear-gradient(90deg,transparent,var(--gold),transparent);
+      position:relative;
+    }
+    .brand-line::after{
+      content:"〰";
+      position:absolute;
+      left:50%;
+      top:-12px;
+      transform:translateX(-50%);
+      color:var(--gold2);
+      background:#0a0a0a;
+      padding:0 8px;
+      font-size:18px;
+    }
+    .sub{
+      margin:10px auto 0;
+      max-width:520px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.55;
+      text-align:center;
+    }
+
+    .card{
+      background:linear-gradient(180deg,rgba(24,24,22,.97),rgba(15,15,14,.98));
+      border:1px solid rgba(216,167,62,.62);
+      border-radius:var(--radius);
+      padding:16px;
+      margin-bottom:14px;
+      box-shadow:
+        0 12px 28px rgba(0,0,0,.28),
+        inset 0 1px 0 rgba(255,255,255,.025);
+    }
+    label{display:block;font-weight:700;font-size:14px;margin:0 0 7px;color:#e7d6ad}
+    input, textarea, select{
+      width:100%;
+      border:1px solid rgba(216,167,62,.30);
+      border-radius:14px;
+      background:rgba(7,7,7,.72);
+      color:var(--text);
+      font-size:18px;
+      padding:13px 14px;
+      outline:none;
+      appearance:none;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.01);
+    }
+    input::placeholder,textarea::placeholder{color:#706d68}
+    input:focus,textarea:focus,select:focus{
+      border-color:var(--gold2);
+      box-shadow:0 0 0 2px rgba(216,167,62,.10);
+    }
+    textarea{min-height:84px;resize:vertical;line-height:1.5}
+    select{font-size:15px;padding:10px 12px}
+    .field{margin-bottom:14px}
+    .song-row{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 74px;
+      gap:8px;
+      align-items:end;
+    }
+    .song-row .field{margin-bottom:0}
+
+    button{
+      border:0;
+      border-radius:14px;
+      padding:14px 16px;
+      font-size:17px;
+      font-weight:800;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .full{width:100%}
+    .primary{
+      background:linear-gradient(180deg,#efc65e,#c8912f);
+      color:#17110a;
+      border:1px solid #f6d177;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 5px 14px rgba(0,0,0,.25);
+    }
+    .secondary{
+      background:linear-gradient(180deg,#22211f,#161615);
+      color:#efe7d7;
+      border:1px solid rgba(216,167,62,.38);
+    }
+    .danger{
+      background:linear-gradient(180deg,#291713,#1b0e0c);
+      color:#f1a293;
+      border:1px solid rgba(216,105,87,.42);
+    }
+    .toggle{
+      width:74px;
+      min-width:74px;
+      white-space:nowrap;
+      background:#1d1c1a;
+      color:#d7c9ad;
+      border:1px solid rgba(216,167,62,.35);
+      padding-left:8px;
+      padding-right:8px;
+    }
+    .toggle.on{
+      background:linear-gradient(180deg,#efc65e,#c8912f);
+      color:#17110a;
+      border-color:#f2cb67;
+    }
+    .hidden{display:none !important}
+
+    .list-toggle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      text-align:left;
+      color:var(--gold2);
+      background:linear-gradient(180deg,#171714,#10100f);
+      border:1px solid rgba(216,167,62,.55);
+    }
+    .count{font-size:14px;color:#d5b56f}
+    .sort-wrap{
+      display:grid;
+      grid-template-columns:auto 1fr;
+      gap:10px;
+      align-items:center;
+      margin-bottom:8px;
+    }
+    .sort-wrap span{font-size:14px;color:#b8aa90}
+    .song{
+      border-top:1px solid rgba(216,167,62,.22);
+      padding:13px 0;
+    }
+    .song:first-of-type{border-top:0}
+    .song-main{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 92px;
+      gap:10px;
+      align-items:start;
+    }
+    .song-text{min-width:0}
+    .song-title{
+      font-size:18px;
+      font-weight:800;
+      margin-bottom:4px;
+      overflow-wrap:anywhere;
+      color:#fff8e7;
+    }
+    .artist{
+      font-size:15px;
+      color:var(--gold2);
+      margin-bottom:6px;
+      overflow-wrap:anywhere;
+    }
+    .memo{
+      font-size:14px;
+      line-height:1.55;
+      color:#a9a49b;
+      white-space:pre-wrap;
+    }
+    .song-actions-panel{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:5px;
+    }
+    .song-icon-actions{
+      display:flex;
+      gap:6px;
+      justify-content:flex-end;
+      align-items:center;
+    }
+    .sent-toggle{
+      width:90px;
+      min-height:22px;
+      padding:2px 6px;
+      border-radius:6px;
+      font-size:11px;
+      line-height:1.2;
+      font-weight:800;
+      background:transparent;
+      color:#777;
+      border:1px solid #666;
+    }
+    .sent-toggle.sent{
+      color:#4da3ff;
+      border-color:#4da3ff;
+    }
+    .sent-toggle.unconfirmed{
+      color:#ff6b6b;
+      border-color:#ff6b6b;
+    }
+    .icon-btn{
+      width:42px;
+      height:42px;
+      padding:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#171714;
+      color:var(--gold2);
+      border:1px solid rgba(216,167,62,.40);
+      border-radius:12px;
+    }
+    .delete-btn{
+      color:#f1a293;
+      border-color:rgba(216,105,87,.40);
+      background:#1d1110;
+    }
+    .edit-icon,.trash-icon{width:22px;height:22px;display:block}
+    .empty{color:var(--muted);text-align:center;padding:12px 6px}
+
+    .settings-btn{
+      position:absolute;
+      top:calc(18px + env(safe-area-inset-top));
+      right:16px;
+      width:38px;
+      height:38px;
+      padding:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:50%;
+      background:#151412;
+      color:var(--gold2);
+      border:1px solid rgba(216,167,62,.5);
+      box-shadow:0 4px 12px rgba(0,0,0,.3);
+    }
+    .settings-btn svg{width:21px;height:21px}
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:calc(24px + env(safe-area-inset-bottom));
+      transform:translateX(-50%);
+      background:rgba(0,0,0,.92);
+      color:#fff;
+      padding:10px 16px;
+      border-radius:999px;
+      border:1px solid rgba(216,167,62,.35);
+      font-size:14px;
+      opacity:0;
+      pointer-events:none;
+      transition:.2s;
+      z-index:40;
+    }
+    .list-bottom-space{
+      height:72px;
+    }
+    .back-to-list-top{
+      position:fixed;
+      right:18px;
+      bottom:calc(62px + env(safe-area-inset-bottom));
+      width:44px;
+      height:44px;
+      padding:0;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:24px;
+      line-height:1;
+      color:rgba(241,198,100,.72);
+      background:rgba(20,20,18,.58);
+      border:1px solid rgba(216,167,62,.34);
+      box-shadow:0 5px 14px rgba(0,0,0,.22);
+      backdrop-filter:blur(4px);
+      -webkit-backdrop-filter:blur(4px);
+      z-index:20;
+    }
+    .back-to-list-top:active{
+      background:rgba(30,29,26,.82);
+      color:var(--gold2);
+    }
+
+    .search-name-hint{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.35}
+    .bulk-help{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:10px}
+    .bulk-area{min-height:190px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+    .toast.show{opacity:1}
+
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.72);
+      backdrop-filter:blur(5px);
+      z-index:30;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .modal{
+      width:min(100%,520px);
+      background:linear-gradient(180deg,#1b1a18,#10100f);
+      border:1px solid rgba(216,167,62,.58);
+      border-radius:22px;
+      padding:18px;
+      box-shadow:0 22px 60px rgba(0,0,0,.52);
+    }
+    .modal-title{
+      font-size:21px;
+      font-weight:800;
+      margin-bottom:10px;
+      color:var(--gold2);
+    }
+    .modal-text{font-size:15px;line-height:1.6;color:#b8b0a2;margin-bottom:12px}
+    .modal textarea{min-height:96px}
+    .settings-modal{max-width:430px}
+    .settings-list{display:grid;gap:9px}
+    .modal .field:last-of-type{margin-bottom:0}
+
+    @media(max-width:520px){
+      h1{font-size:27px}
+      .song-row{grid-template-columns:minmax(0,1fr) 70px}
+      .toggle{width:70px;min-width:70px;font-size:16px}
+      .brand{margin-top:8px}
+    }
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <button id="settingsBtn" class="settings-btn" aria-label="設定" title="設定">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 8.2A3.8 3.8 0 1 0 12 15.8 3.8 3.8 0 0 0 12 8.2Z" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M19.1 13.3a7.5 7.5 0 0 0 0-2.6l2-1.5-2-3.4-2.5 1a8 8 0 0 0-2.2-1.3L14 2.8h-4l-.4 2.7a8 8 0 0 0-2.2 1.3l-2.5-1-2 3.4 2 1.5a7.5 7.5 0 0 0 0 2.6l-2 1.5 2 3.4 2.5-1a8 8 0 0 0 2.2 1.3l.4 2.7h4l.4-2.7a8 8 0 0 0 2.2-1.3l2.5 1 2-3.4-2-1.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <div class="brand">
+    <div class="vinyl-mark" aria-hidden="true"></div>
+    <h1>MY TRACKS</h1>
+    <div class="brand-line"></div>
+    <p class="sub">好きな曲をためて、ChatGPTに渡すためのシンプルな記録アプリです。</p>
+  </div>
+
+  <section class="card">
+    <div class="field">
+      <label for="artist">アーティスト</label>
+      <input id="artist" type="text" placeholder="例：バクチク" autocomplete="off">
+    </div>
+
+    <div class="song-row">
+      <div class="field">
+        <label for="song">曲名</label>
+        <input id="song" type="text" placeholder="例：ムーンライト" autocomplete="off">
+      </div>
+      <button id="memoToggle" type="button" class="toggle" aria-pressed="false">追記</button>
+    </div>
+
+    <div id="memoWrap" class="field hidden" style="margin-top:12px">
+      <textarea id="memo" placeholder="例：イントロが好き、サビへの入りがかっこいい"></textarea>
+    </div>
+
+    <button id="addBtn" class="primary full" style="margin-top:14px">＋ 曲を登録</button>
+  </section>
+
+  <section class="card">
+    <button id="listToggleBtn" class="list-toggle full">
+      <span>登録した曲</span>
+      <span id="count" class="count">0曲</span>
+    </button>
+
+    <div id="listArea" class="hidden" style="margin-top:12px">
+      <div class="sort-wrap">
+        <span>並べ替え</span>
+        <select id="sortSelect">
+          <option value="registered">登録順</option>
+          <option value="artist">アーティスト別</option>
+          <option value="song">曲名別</option>
+        </select>
+      </div>
+      <div id="songList"></div>
+      <div class="list-bottom-space" aria-hidden="true"></div>
+    </div>
+
+    <textarea id="output" class="output hidden" readonly></textarea>
+
+  </section>
+
+  <input id="restoreInput" type="file" accept=".json,application/json" class="hidden">
+</main>
+
+<button id="backToListTopBtn" class="back-to-list-top hidden" type="button" aria-label="リスト上部へ戻る" title="リスト上部へ戻る">↑</button>
+
+
+
+
+<div id="chatgptImportModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="chatgptImportTitle">
+  <div class="modal">
+    <div id="chatgptImportTitle" class="modal-title">ChatGPTから反映</div>
+    <div class="modal-text">ChatGPTが返した「MYTRACKS_UPDATE」データをそのまま貼り付けてください。</div>
+    <textarea id="chatgptImportText" placeholder="ここに貼り付け"></textarea>
+    <button id="chatgptImportApplyBtn" class="primary full" style="margin-top:12px">反映する</button>
+    <button id="chatgptImportBackBtn" class="secondary full" style="margin-top:8px">戻る</button>
+  </div>
+</div>
+
+<div id="editModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+  <div class="modal">
+    <div id="editTitle" class="modal-title">曲を編集</div>
+    <div class="field">
+      <label for="editArtist">アーティスト</label>
+      <input id="editArtist" type="text" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="editSong">曲名</label>
+      <input id="editSong" type="text" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="editAppleArtist">Apple Music検索用アーティスト <span style="opacity:.65;font-weight:400">（違う時だけ）</span></label>
+      <input id="editAppleArtist" type="text" placeholder="例：BOOWY" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="editAppleSong">Apple Music検索用曲名 <span style="opacity:.65;font-weight:400">（違う時だけ）</span></label>
+      <input id="editAppleSong" type="text" placeholder="通常は空欄でOK" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="editMemo">追記</label>
+      <textarea id="editMemo" placeholder="追記なしでも保存できます"></textarea>
+    </div>
+    <button id="editSaveBtn" class="primary full">変更を保存</button>
+    <button id="editBackBtn" class="secondary full" style="margin-top:8px">戻る</button>
+  </div>
+</div>
+
+<div id="settingsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+  <div class="modal settings-modal">
+    <div id="settingsTitle" class="modal-title">設定</div>
+    <div class="settings-list">
+      <button id="showBtn" class="primary full">ChatGPTへ渡す</button>
+      <button id="importFromChatGPTBtn" class="secondary full">ChatGPTから反映</button>
+      <button id="bulkImportBtn" class="secondary full">プレイリスト一括登録</button>
+      <button id="backupBtn" class="secondary full">バックアップする</button>
+      <button id="restoreBtn" class="secondary full">バックアップを復元</button>
+      <button id="clearBtn" class="danger full">全曲削除</button>
+      <button id="settingsBackBtn" class="secondary full">戻る</button>
+    </div>
+  </div>
+</div>
+
+<div id="bulkImportModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="bulkImportTitle">
+  <div class="modal">
+    <div id="bulkImportTitle" class="modal-title">プレイリスト一括登録</div>
+    <div class="bulk-help">ChatGPTから返された一括登録データを貼り付けます。<br>形式：表示アーティスト［タブ］曲名［タブ］Apple Music検索用アーティスト（任意）［タブ］Apple Music検索用曲名（任意）<br>アルバム情報は保存・表示しません。</div>
+    <textarea id="bulkImportText" class="bulk-area" placeholder="MYTRACKS_BULK_BEGIN&#10;BOØWY	B・BLUE	BOOWY	B・BLUE&#10;MYTRACKS_BULK_END"></textarea>
+    <button id="bulkImportApplyBtn" class="primary full">一括登録する</button>
+    <button id="bulkImportBackBtn" class="secondary full" style="margin-top:8px">戻る</button>
+  </div>
+</div>
+
+<div id="duplicateModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="dupTitle">
+  <div class="modal">
+    <div id="dupTitle" class="modal-title">登録済です。</div>
+    <div class="modal-text">別バージョンの場合は違いがわかる追記を入力してください。</div>
+    <textarea id="duplicateMemo" placeholder="例：ライブ版、別ミックス、アコースティック版"></textarea>
+    <button id="duplicateRegisterBtn" class="primary full" style="margin-top:12px">この内容で登録</button>
+    <button id="duplicateCancelBtn" class="secondary full" style="margin-top:8px">登録しない</button>
+  </div>
+</div>
+
+<div id="toast" class="toast">コピーしました</div>
+
+<script>
+(() => {
+  const STORAGE_KEY = "sukiuta_v2_data";
+  const LEGACY_KEY = "sukiuta_v1_songs";
+  const STATUS_RESET_KEY = "sukiuta_status_reset_v1";
+  const BOOWY_UNSENT_KEY = "sukiuta_boowy_unsent_v1";
+
+  let state = loadState();
+  if (!localStorage.getItem(BOOWY_UNSENT_KEY)) {
+    let changed = false;
+    state.songs.forEach(item => {
+      if (norm(item.artist) === norm("BOØWY")) {
+        item.sent = false;
+        item.reviewStatus = "pending";
+        changed = true;
+      }
+    });
+    if (changed) saveState();
+    localStorage.setItem(BOOWY_UNSENT_KEY, "1");
+  }
+  let editingId = null;
+  let memoOpen = false;
+  let sortMode = "registered";
+
+  const artistEl = document.getElementById("artist");
+  const songEl = document.getElementById("song");
+  const memoEl = document.getElementById("memo");
+  const memoWrap = document.getElementById("memoWrap");
+  const memoToggle = document.getElementById("memoToggle");
+  const addBtn = document.getElementById("addBtn");
+  const listToggleBtn = document.getElementById("listToggleBtn");
+  const listArea = document.getElementById("listArea");
+  const sortSelect = document.getElementById("sortSelect");
+  const listEl = document.getElementById("songList");
+  const countEl = document.getElementById("count");
+  const outputEl = document.getElementById("output");
+  const showBtn = document.getElementById("showBtn");
+  const settingsBtn = document.getElementById("settingsBtn");
+  const settingsModal = document.getElementById("settingsModal");
+  const settingsBackBtn = document.getElementById("settingsBackBtn");
+  const backupBtn = document.getElementById("backupBtn");
+  const restoreBtn = document.getElementById("restoreBtn");
+  const restoreInput = document.getElementById("restoreInput");
+  const clearBtn = document.getElementById("clearBtn");
+  const toastEl = document.getElementById("toast");
+  const backToListTopBtn = document.getElementById("backToListTopBtn");
+
+  const importFromChatGPTBtn = document.getElementById("importFromChatGPTBtn");
+  const bulkImportBtn = document.getElementById("bulkImportBtn");
+  const bulkImportModal = document.getElementById("bulkImportModal");
+  const bulkImportText = document.getElementById("bulkImportText");
+  const bulkImportApplyBtn = document.getElementById("bulkImportApplyBtn");
+  const bulkImportBackBtn = document.getElementById("bulkImportBackBtn");
+  const chatgptImportModal = document.getElementById("chatgptImportModal");
+  const chatgptImportText = document.getElementById("chatgptImportText");
+  const chatgptImportApplyBtn = document.getElementById("chatgptImportApplyBtn");
+  const chatgptImportBackBtn = document.getElementById("chatgptImportBackBtn");
+
+  const editModal = document.getElementById("editModal");
+  const editArtist = document.getElementById("editArtist");
+  const editSongEl = document.getElementById("editSong");
+  const editMemo = document.getElementById("editMemo");
+  const editAppleArtist = document.getElementById("editAppleArtist");
+  const editAppleSong = document.getElementById("editAppleSong");
+  const editSaveBtn = document.getElementById("editSaveBtn");
+  const editBackBtn = document.getElementById("editBackBtn");
+
+  const duplicateModal = document.getElementById("duplicateModal");
+  const duplicateMemo = document.getElementById("duplicateMemo");
+  const duplicateRegisterBtn = document.getElementById("duplicateRegisterBtn");
+  const duplicateCancelBtn = document.getElementById("duplicateCancelBtn");
+
+  function newId() {
+    return (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.songs)) {
+          parsed.pendingDeletes = Array.isArray(parsed.pendingDeletes) ? parsed.pendingDeletes : [];
+          const shouldResetStatuses = localStorage.getItem(STATUS_RESET_KEY) !== "done";
+          parsed.songs = parsed.songs.map((x, i) => ({
+            id: x.id || newId(),
+            artist: String(x.artist || ""),
+            song: String(x.song || ""),
+            memo: String(x.memo || ""),
+            sent: shouldResetStatuses ? false : Boolean(x.sent),
+            reviewStatus: shouldResetStatuses
+              ? "pending"
+              : (["pending","confirmed","unconfirmed"].includes(x.reviewStatus)
+                  ? x.reviewStatus
+                  : (x.sent ? "confirmed" : "pending")),
+            createdAt: x.createdAt || new Date(Date.now() + i).toISOString()
+          }));
+          if (shouldResetStatuses) {
+            localStorage.setItem(STATUS_RESET_KEY, "done");
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+          }
+          return parsed;
+        }
+      }
+
+      const legacyRaw = localStorage.getItem(LEGACY_KEY);
+      if (legacyRaw) {
+        const legacy = JSON.parse(legacyRaw);
+        if (Array.isArray(legacy)) {
+          return {
+            version: 2,
+            songs: legacy.map((x, i) => ({
+              id: x.id || newId(),
+              artist: String(x.artist || ""),
+              song: String(x.song || ""),
+              memo: String(x.memo || ""),
+              sent: false,
+              reviewStatus: "pending",
+              createdAt: x.createdAt || new Date(Date.now() + i).toISOString()
+            })),
+            pendingDeletes: []
+          };
+        }
+      }
+    } catch {}
+    return {version:2, songs:[], pendingDeletes:[]};
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function esc(s) {
+    return String(s ?? "").replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[c]));
+  }
+
+  function norm(s) {
+    return String(s || "").trim().toLocaleLowerCase("ja-JP")
+      .replace(/[\s　・･\-_ー]/g, "");
+  }
+
+  function setMemoOpen(open) {
+    memoOpen = open;
+    memoWrap.classList.toggle("hidden", !open);
+    memoToggle.classList.toggle("on", open);
+    memoToggle.setAttribute("aria-pressed", String(open));
+    memoToggle.textContent = open ? "追記 ✓" : "追記";
+    if (open) setTimeout(() => memoEl.focus(), 0);
+  }
+
+  function resetForm() {
+    artistEl.value = "";
+    songEl.value = "";
+    memoEl.value = "";
+    editingId = null;
+    addBtn.textContent = "＋ 曲を登録";
+    setMemoOpen(false);
+  }
+
+  function getSortedSongs() {
+    const arr = [...state.songs];
+    if (sortMode === "artist") {
+      arr.sort((a,b) =>
+        a.artist.localeCompare(b.artist, "ja") ||
+        a.song.localeCompare(b.song, "ja") ||
+        a.createdAt.localeCompare(b.createdAt)
+      );
+    } else if (sortMode === "song") {
+      arr.sort((a,b) =>
+        a.song.localeCompare(b.song, "ja") ||
+        a.artist.localeCompare(b.artist, "ja") ||
+        a.createdAt.localeCompare(b.createdAt)
+      );
+    } else {
+      arr.sort((a,b) => a.createdAt.localeCompare(b.createdAt));
+    }
+    return arr;
+  }
+
+  function renderList() {
+    countEl.textContent = `${state.songs.length}曲`;
+    const songs = getSortedSongs();
+
+    if (!songs.length) {
+      listEl.innerHTML = `<div class="empty">まだ曲がありません。</div>`;
+      return;
+    }
+
+    listEl.innerHTML = songs.map(item => `
+      <div class="song">
+        <div class="song-main">
+          <div class="song-text">
+            <div class="song-title">${esc(item.song)}</div>
+            <div class="artist">${esc(item.artist)}</div>
+            ${(item.appleArtist || item.appleSong) ? `<div class="search-name-hint">Apple Music：${esc(item.appleArtist || item.artist)}｜${esc(item.appleSong || item.song)}</div>` : ""}
+          </div>
+          <div class="song-actions-panel">
+            <div class="song-icon-actions">
+              <button class="icon-btn edit-btn" data-id="${item.id}" aria-label="編集" title="編集">
+                <svg class="edit-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M17.7 3.3a2.4 2.4 0 0 1 3.4 3.4L9.2 18.6 4 20l1.4-5.2L17.7 3.3Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M15.9 5.1 19 8.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <button class="icon-btn delete-btn" data-id="${item.id}" aria-label="削除" title="削除">
+                <svg class="trash-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            <button
+              class="sent-toggle ${item.reviewStatus === "unconfirmed" ? "unconfirmed" : (item.sent ? "sent" : "")}"
+              data-id="${item.id}"
+              aria-pressed="${item.sent ? "true" : "false"}"
+              title="${item.reviewStatus === "unconfirmed" ? "未確認。押すと確認済みにします" : (item.sent ? "確認済み。押すと未送信に戻します" : "未送信")}"
+            >${item.reviewStatus === "unconfirmed" ? "未確認" : (item.sent ? "確認済" : "未送信")}</button>
+          </div>
+        </div>
+        ${item.memo ? `<div class="memo">追記：${esc(item.memo)}</div>` : ""}
+      </div>
+    `).join("");
+
+    document.querySelectorAll(".edit-btn").forEach(btn => {
+      btn.addEventListener("click", () => editSong(btn.dataset.id));
+    });
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+      btn.addEventListener("click", () => deleteSong(btn.dataset.id));
+    });
+    document.querySelectorAll(".sent-toggle").forEach(btn => {
+      btn.addEventListener("click", () => toggleSent(btn.dataset.id));
+    });
+  }
+
+  function toggleSent(id) {
+    const item = state.songs.find(x => x.id === id);
+    if (!item) return;
+
+    if (item.reviewStatus === "unconfirmed") {
+      item.reviewStatus = "confirmed";
+      item.sent = true;
+    } else if (item.sent) {
+      item.reviewStatus = "pending";
+      item.sent = false;
+    } else {
+      item.reviewStatus = "confirmed";
+      item.sent = true;
+    }
+
+    saveState();
+    renderList();
+  }
+
+  function findDuplicates(artist, song) {
+    return state.songs.filter(x =>
+      x.id !== editingId &&
+      norm(x.artist) === norm(artist) &&
+      norm(x.song) === norm(song)
+    );
+  }
+
+  function showSettingsModal() {
+    settingsModal.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+  }
+
+  function hideSettingsModal() {
+    settingsModal.classList.add("hidden");
+    document.body.style.overflow = "";
+  }
+
+  function showDuplicateModal() {
+    duplicateMemo.value = "";
+    duplicateModal.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    setTimeout(() => duplicateMemo.focus(), 0);
+  }
+
+  function hideDuplicateModal() {
+    duplicateModal.classList.add("hidden");
+    document.body.style.overflow = "";
+    duplicateMemo.value = "";
+  }
+
+  function addOrUpdate() {
+    const artist = artistEl.value.trim();
+    const song = songEl.value.trim();
+    const memo = memoOpen ? memoEl.value.trim() : "";
+
+    if (!artist) {
+      alert("アーティスト名を入れてください。");
+      artistEl.focus();
+      return;
+    }
+    if (!song) {
+      alert("曲名を入れてください。");
+      songEl.focus();
+      return;
+    }
+
+    if (editingId) {
+      const idx = state.songs.findIndex(x => x.id === editingId);
+      if (idx >= 0) {
+        state.songs[idx] = {
+          ...state.songs[idx],
+          artist,
+          song,
+          memo,
+          sent:false
+        };
+      }
+      saveState();
+      resetForm();
+      renderList();
+      return;
+    }
+
+    if (findDuplicates(artist, song).length) {
+      showDuplicateModal();
+      return;
+    }
+
+    state.songs.push({
+      id:newId(),
+      artist,
+      song,
+      memo,
+      sent:false,
+      reviewStatus:"pending",
+      createdAt:new Date().toISOString()
+    });
+    saveState();
+    resetForm();
+    renderList();
+  }
+
+  function editSong(id) {
+    const item = state.songs.find(x => x.id === id);
+    if (!item) return;
+    editingId = id;
+    editArtist.value = item.artist;
+    editSongEl.value = item.song;
+    editAppleArtist.value = item.appleArtist || "";
+    editAppleSong.value = item.appleSong || "";
+    editMemo.value = item.memo || "";
+    editModal.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+  }
+
+  function hideEditModal() {
+    editModal.classList.add("hidden");
+    document.body.style.overflow = "";
+    editingId = null;
+  }
+
+  function deleteSong(id) {
+    const item = state.songs.find(x => x.id === id);
+    if (!item) return;
+    if (!confirm(`「${item.song}」を削除しますか？`)) return;
+
+    if (item.sent) {
+      state.pendingDeletes.push({
+        artist:item.artist,
+        song:item.song,
+        memo:item.memo || ""
+      });
+    }
+    state.songs = state.songs.filter(x => x.id !== id);
+    saveState();
+    if (editingId === id) resetForm();
+    renderList();
+  }
+
+  function showBulkImportModal() {
+    settingsModal.classList.add("hidden");
+    bulkImportText.value = "";
+    bulkImportModal.classList.remove("hidden");
+  }
+
+  function hideBulkImportModal() {
+    bulkImportModal.classList.add("hidden");
+    settingsModal.classList.remove("hidden");
+  }
+
+  function applyBulkImport() {
+    const raw = bulkImportText.value.trim();
+    if (!raw) { alert("一括登録データを貼り付けてください。"); return; }
+    const lines = raw.split(/\r?\n/).map(x => x.trimEnd())
+      .filter(x => x && x !== "MYTRACKS_BULK_BEGIN" && x !== "MYTRACKS_BULK_END");
+    let added = 0, skipped = 0;
+    for (const line of lines) {
+      const cols = line.split("\t");
+      if (cols.length < 2) { skipped++; continue; }
+      const artist = (cols[0] || "").trim();
+      const song = (cols[1] || "").trim();
+      const appleArtist = (cols[2] || "").trim();
+      const appleSong = (cols[3] || "").trim();
+      if (!artist || !song) { skipped++; continue; }
+      const duplicate = state.songs.some(x => norm(x.artist) === norm(artist) && norm(x.song) === norm(song));
+      if (duplicate) { skipped++; continue; }
+      state.songs.push({
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random(),
+        artist, song, appleArtist, appleSong, memo:"",
+        sent:false, reviewStatus:"pending", createdAt:new Date().toISOString()
+      });
+      added++;
+    }
+    saveState(); renderList();
+    alert(`${added}曲を登録しました。${skipped ? `\n${skipped}行は重複または形式不備のため登録していません。` : ""}`);
+    hideBulkImportModal();
+  }
+
+  function buildHandoffText() {
+    const unsent = state.songs.filter(x => !x.sent);
+    const deletes = state.pendingDeletes;
+
+    if (!unsent.length && !deletes.length) return "";
+
+    const lines = [
+      "以下は「すきなうた」アプリからの追加・変更分です。",
+      "これまで保存している私の好きな曲・好み情報は削除せず、今回の内容を反映してください。",
+      "表記ゆれや略称は、Webで確認して自然な正式名称として整理してください。",
+      "判断できないものを推測で修正しないでください。",
+      "",
+      "【正式名称の確認ルール】",
+      "・今回渡した全曲を1曲ずつ最後まで確認してください。",
+      "・アーティスト名・曲名に略称、カタカナ・ひらがな表記、英字表記、大文字小文字などの違いがある場合はWebで正式名称を確認してください。",
+      "・公式サイト、公式ディスコグラフィ、レコード会社・レーベルなど信頼できる情報を優先してください。",
+      "・1回の検索で見つからなくても未確認にせず、アーティスト名＋曲名、アルバム名、レコード会社など検索方法を変えて確認してください。",
+      "・確認対象を途中で残して終了せず、今回渡した全曲の確認を完了してください。",
+      "・すでに自然な正式名称になっている曲は修正データに含めないでください。",
+      "・「〜／～」、三点リーダー、大文字小文字など、一覧で見て不自然ではない軽微な表記差は許容してください。",
+      "・正式なアーティスト名、曲名そのもの、feat.表記など、後から一覧を見て明らかに不自然・不完全になるものは正式表記へ修正してください。",
+      "・最後まで調べても特定できなかったものだけ、MYTRACKS_UPDATEとは別に「未確認」として一覧で出してください。",
+      "・推測だけで正式名称を決めないでください。",
+      ""
+    ];
+
+    if (unsent.length) {
+      lines.push("【追加・変更】");
+      unsent.forEach(item => {
+        lines.push(`- ${item.artist} / ${item.song}`);
+        if (item.memo) lines.push(`  追記：${item.memo}`);
+      });
+      lines.push("");
+    }
+
+    if (deletes.length) {
+      lines.push("【削除】");
+      deletes.forEach(item => {
+        lines.push(`- ${item.artist} / ${item.song}`);
+        if (item.memo) lines.push(`  追記：${item.memo}`);
+      });
+      lines.push("");
+    }
+
+    lines.push(
+      "【お願い】",
+      "・既存の好み情報を維持したまま今回分を追加・更新してください。",
+      "・今後セットリストを頼んだときは、これまで蓄積した登録曲全体から流れを重視して組んでください。",
+      "",
+      "【アプリへ正式名称を戻す場合】",
+      "アーティスト名または曲名に修正が必要なものだけ、説明とは別に次の形式で出してください。",
+      "MYTRACKS_UPDATE_BEGIN",
+      "元アーティスト名\\t元曲名\\t正式アーティスト名\\t正式曲名",
+      "MYTRACKS_UPDATE_END",
+      "※区切りはタブ文字。確実に確認できたものだけ出し、推測では修正しないでください。"
+    );
+
+    return lines.join("\n");
+  }
+
+  async function handoffToChatGPT() {
+    const text = buildHandoffText();
+    if (!text) {
+      alert("新しく渡す曲はありません。");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      outputEl.value = text;
+      outputEl.classList.remove("hidden");
+      outputEl.focus();
+      outputEl.select();
+      document.execCommand("copy");
+      outputEl.classList.add("hidden");
+    }
+
+    state.songs = state.songs.map(x => (
+      x.sent ? x : {...x, sent:true, reviewStatus:"confirmed"}
+    ));
+    state.pendingDeletes = [];
+    saveState();
+    renderList();
+    showToast("ChatGPTへ渡す内容をコピーしました");
+  }
+
+  function showChatGPTImportModal() {
+    hideSettingsModal();
+    chatgptImportText.value = "";
+    chatgptImportModal.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    setTimeout(() => chatgptImportText.focus(), 0);
+  }
+
+  function hideChatGPTImportModal() {
+    chatgptImportModal.classList.add("hidden");
+    document.body.style.overflow = "";
+    chatgptImportText.value = "";
+  }
+
+  function parseChatGPTUpdates(text) {
+    const begin = "MYTRACKS_UPDATE_BEGIN";
+    const end = "MYTRACKS_UPDATE_END";
+    const start = text.indexOf(begin);
+    const finish = text.indexOf(end);
+    if (start < 0 || finish < 0 || finish <= start) {
+      throw new Error("format");
+    }
+
+    const body = text.slice(start + begin.length, finish).trim();
+    if (!body) throw new Error("empty");
+
+    const rows = body.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    return rows.map(row => {
+      const cols = row.split("\t").map(x => x.trim());
+      if (cols.length !== 4 || cols.some(x => !x)) throw new Error("columns");
+      return {
+        oldArtist:cols[0],
+        oldSong:cols[1],
+        newArtist:cols[2],
+        newSong:cols[3]
+      };
+    });
+  }
+
+  function applyChatGPTUpdates() {
+    let updates;
+    try {
+      updates = parseChatGPTUpdates(chatgptImportText.value);
+    } catch {
+      alert("反映用データの形式を確認できません。ChatGPTが返したMYTRACKS_UPDATEデータをそのまま貼り付けてください。");
+      return;
+    }
+
+    const planned = [];
+    const missing = [];
+
+    updates.forEach(u => {
+      const matches = state.songs.filter(x =>
+        norm(x.artist) === norm(u.oldArtist) &&
+        norm(x.song) === norm(u.oldSong)
+      );
+      if (matches.length === 1) {
+        planned.push({item:matches[0], update:u});
+      } else {
+        missing.push(`${u.oldArtist} / ${u.oldSong}`);
+      }
+    });
+
+    if (!planned.length) {
+      alert("一致する登録曲がありませんでした。");
+      return;
+    }
+
+    const preview = planned.map(x =>
+      `${x.item.artist} / ${x.item.song}\n→ ${x.update.newArtist} / ${x.update.newSong}`
+    ).join("\n\n");
+
+    const extra = missing.length ? `\n\n一致しなかった曲：${missing.length}件` : "";
+    if (!confirm(`${planned.length}件を次の正式名称へ変更します。\n\n${preview}${extra}\n\n反映しますか？`)) return;
+
+    planned.forEach(({item,update}) => {
+      item.artist = update.newArtist;
+      item.song = update.newSong;
+      item.sent = true;
+      item.reviewStatus = "confirmed";
+    });
+
+    saveState();
+    renderList();
+    hideChatGPTImportModal();
+    showToast(`${planned.length}件を反映しました`);
+  }
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    setTimeout(() => toastEl.classList.remove("show"), 1700);
+  }
+
+  function backupData() {
+    const data = {
+      app:"すきなうた",
+      formatVersion:1,
+      exportedAt:new Date().toISOString(),
+      songs:state.songs,
+      pendingDeletes:state.pendingDeletes
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const d = new Date();
+    const stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+    a.href = url;
+    a.download = `sukiuta_backup_${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function restoreData(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(String(reader.result || ""));
+        if (!data || !Array.isArray(data.songs)) throw new Error("bad");
+        if (!confirm(`${data.songs.length}曲のバックアップを復元しますか？\n現在の登録内容は置き換わります。`)) return;
+
+        state = {
+          version:2,
+          songs:data.songs.map((x, i) => ({
+            id:x.id || newId(),
+            artist:String(x.artist || ""),
+            song:String(x.song || ""),
+            memo:String(x.memo || ""),
+            sent:Boolean(x.sent),
+            reviewStatus:["pending","confirmed","unconfirmed"].includes(x.reviewStatus)
+              ? x.reviewStatus
+              : (x.sent ? "confirmed" : "pending"),
+            createdAt:x.createdAt || new Date(Date.now()+i).toISOString()
+          })),
+          pendingDeletes:Array.isArray(data.pendingDeletes) ? data.pendingDeletes : []
+        };
+        saveState();
+        resetForm();
+        renderList();
+        showToast("バックアップを復元しました");
+      } catch {
+        alert("このバックアップファイルは読み込めません。");
+      } finally {
+        restoreInput.value = "";
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  memoToggle.addEventListener("click", () => setMemoOpen(!memoOpen));
+  addBtn.addEventListener("click", addOrUpdate);
+
+  listToggleBtn.addEventListener("click", () => {
+    renderList();
+    listArea.classList.toggle("hidden");
+    backToListTopBtn.classList.toggle("hidden", listArea.classList.contains("hidden"));
+  });
+
+  backToListTopBtn.addEventListener("click", () => {
+    listToggleBtn.scrollIntoView({behavior:"smooth", block:"start"});
+  });
+
+  sortSelect.addEventListener("change", () => {
+    sortMode = sortSelect.value;
+    renderList();
+  });
+
+  settingsBtn.addEventListener("click", showSettingsModal);
+  settingsBackBtn.addEventListener("click", hideSettingsModal);
+
+  showBtn.addEventListener("click", async () => {
+    await handoffToChatGPT();
+  });
+
+  duplicateRegisterBtn.addEventListener("click", () => {
+    const artist = artistEl.value.trim();
+    const song = songEl.value.trim();
+    const memo = duplicateMemo.value.trim();
+
+    if (!memo) {
+      alert("違いがわかる追記を入力してください。");
+      duplicateMemo.focus();
+      return;
+    }
+
+    state.songs.push({
+      id:newId(),
+      artist,
+      song,
+      memo,
+      sent:false,
+      reviewStatus:"pending",
+      createdAt:new Date().toISOString()
+    });
+    saveState();
+    hideDuplicateModal();
+    resetForm();
+    renderList();
+  });
+
+  duplicateCancelBtn.addEventListener("click", () => {
+    hideDuplicateModal();
+    resetForm();
+  });
+
+  bulkImportBtn.addEventListener("click", showBulkImportModal);
+  bulkImportBackBtn.addEventListener("click", hideBulkImportModal);
+  bulkImportApplyBtn.addEventListener("click", applyBulkImport);
+
+  importFromChatGPTBtn.addEventListener("click", showChatGPTImportModal);
+  chatgptImportBackBtn.addEventListener("click", hideChatGPTImportModal);
+  chatgptImportApplyBtn.addEventListener("click", applyChatGPTUpdates);
+
+  editSaveBtn.addEventListener("click", () => {
+    if (!editingId) return;
+    const artist = editArtist.value.trim();
+    const song = editSongEl.value.trim();
+    const appleArtist = editAppleArtist.value.trim();
+    const appleSong = editAppleSong.value.trim();
+    const memo = editMemo.value.trim();
+
+    if (!artist) {
+      alert("アーティスト名を入れてください。");
+      editArtist.focus();
+      return;
+    }
+    if (!song) {
+      alert("曲名を入れてください。");
+      editSongEl.focus();
+      return;
+    }
+
+    const duplicate = state.songs.some(x =>
+      x.id !== editingId &&
+      norm(x.artist) === norm(artist) &&
+      norm(x.song) === norm(song)
+    );
+    if (duplicate) {
+      alert("同じアーティスト・曲名がすでに登録されています。");
+      return;
+    }
+
+    const idx = state.songs.findIndex(x => x.id === editingId);
+    if (idx >= 0) {
+      state.songs[idx] = {
+        ...state.songs[idx],
+        artist,
+        song,
+        appleArtist,
+        appleSong,
+        memo,
+        sent:false
+      };
+      saveState();
+      renderList();
+    }
+    hideEditModal();
+  });
+
+  editBackBtn.addEventListener("click", hideEditModal);
+
+  backupBtn.addEventListener("click", () => {
+    hideSettingsModal();
+    backupData();
+  });
+  restoreBtn.addEventListener("click", () => {
+    hideSettingsModal();
+    restoreInput.click();
+  });
+  restoreInput.addEventListener("change", () => {
+    const file = restoreInput.files && restoreInput.files[0];
+    if (file) restoreData(file);
+  });
+
+  clearBtn.addEventListener("click", () => {
+    if (!state.songs.length) return;
+    if (!confirm("登録した曲をすべて削除しますか？")) return;
+    state.songs = [];
+    state.pendingDeletes = [];
+    saveState();
+    resetForm();
+    renderList();
+    hideSettingsModal();
+  });
+
+  renderList();
+})();
+</script>
+</body>
+</html>
