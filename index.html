@@ -256,11 +256,33 @@
       color:#a9a49b;
       white-space:pre-wrap;
     }
+    .song-actions-panel{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:5px;
+    }
     .song-icon-actions{
       display:flex;
       gap:6px;
       justify-content:flex-end;
       align-items:center;
+    }
+    .sent-toggle{
+      width:90px;
+      min-height:22px;
+      padding:2px 6px;
+      border-radius:6px;
+      font-size:11px;
+      line-height:1.2;
+      font-weight:800;
+      background:transparent;
+      color:#777;
+      border:1px solid #666;
+    }
+    .sent-toggle.sent{
+      color:#4da3ff;
+      border-color:#4da3ff;
     }
     .icon-btn{
       width:42px;
@@ -642,18 +664,26 @@
             <div class="song-title">${esc(item.song)}</div>
             <div class="artist">${esc(item.artist)}</div>
           </div>
-          <div class="song-icon-actions">
-            <button class="icon-btn edit-btn" data-id="${item.id}" aria-label="編集" title="編集">
-              <svg class="edit-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M17.7 3.3a2.4 2.4 0 0 1 3.4 3.4L9.2 18.6 4 20l1.4-5.2L17.7 3.3Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M15.9 5.1 19 8.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
-              </svg>
-            </button>
-            <button class="icon-btn delete-btn" data-id="${item.id}" aria-label="削除" title="削除">
-              <svg class="trash-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
+          <div class="song-actions-panel">
+            <div class="song-icon-actions">
+              <button class="icon-btn edit-btn" data-id="${item.id}" aria-label="編集" title="編集">
+                <svg class="edit-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M17.7 3.3a2.4 2.4 0 0 1 3.4 3.4L9.2 18.6 4 20l1.4-5.2L17.7 3.3Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M15.9 5.1 19 8.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <button class="icon-btn delete-btn" data-id="${item.id}" aria-label="削除" title="削除">
+                <svg class="trash-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            <button
+              class="sent-toggle ${item.sent ? "sent" : ""}"
+              data-id="${item.id}"
+              aria-pressed="${item.sent ? "true" : "false"}"
+              title="${item.sent ? "送信済み。押すと未送信に戻します" : "未送信。押すと送信済みにします"}"
+            >送信済</button>
           </div>
         </div>
         ${item.memo ? `<div class="memo">追記：${esc(item.memo)}</div>` : ""}
@@ -666,6 +696,17 @@
     document.querySelectorAll(".delete-btn").forEach(btn => {
       btn.addEventListener("click", () => deleteSong(btn.dataset.id));
     });
+    document.querySelectorAll(".sent-toggle").forEach(btn => {
+      btn.addEventListener("click", () => toggleSent(btn.dataset.id));
+    });
+  }
+
+  function toggleSent(id) {
+    const item = state.songs.find(x => x.id === id);
+    if (!item) return;
+    item.sent = !item.sent;
+    saveState();
+    renderList();
   }
 
   function findDuplicates(artist, song) {
@@ -854,6 +895,7 @@
     state.songs = state.songs.map(x => ({...x, sent:true}));
     state.pendingDeletes = [];
     saveState();
+    renderList();
     showToast("ChatGPTへ渡す内容をコピーしました");
   }
 
