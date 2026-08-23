@@ -665,6 +665,7 @@
             id: x.id || newId(),
             artist: String(x.artist || ""),
             song: String(x.song || ""),
+            album: String(x.album || ""),
             appleArtist: String(x.appleArtist || ""),
             appleSong: String(x.appleSong || ""),
             memo: String(x.memo || ""),
@@ -694,6 +695,7 @@
               id: x.id || newId(),
               artist: String(x.artist || ""),
               song: String(x.song || ""),
+              album: String(x.album || ""),
               appleArtist: String(x.appleArtist || ""),
               appleSong: String(x.appleSong || ""),
               memo: String(x.memo || ""),
@@ -1210,7 +1212,7 @@
   function backupData() {
     const data = {
       app:"すきなうた",
-      formatVersion:1,
+      formatVersion:2,
       exportedAt:new Date().toISOString(),
       songs:state.songs,
       pendingDeletes:state.pendingDeletes
@@ -1242,6 +1244,7 @@
             id:x.id || newId(),
             artist:String(x.artist || ""),
             song:String(x.song || ""),
+            album:String(x.album || ""),
             appleArtist:String(x.appleArtist || ""),
             appleSong:String(x.appleSong || ""),
             memo:String(x.memo || ""),
