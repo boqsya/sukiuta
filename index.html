@@ -106,8 +106,41 @@
     .song-title{font-size:18px;font-weight:800;margin-bottom:4px;overflow-wrap:anywhere}
     .artist{font-size:15px;color:#444;margin-bottom:6px;overflow-wrap:anywhere}
     .memo{font-size:14px;line-height:1.55;color:#555;white-space:pre-wrap}
-    .song-actions{display:flex;gap:8px;margin-top:10px}
-    .song-actions button{flex:1;font-size:14px;padding:10px 12px}
+    .song-main{
+      display:grid;
+      grid-template-columns:1fr 42px;
+      gap:10px;
+      align-items:start;
+    }
+    .song-text{min-width:0}
+    .song-icon-actions{
+      display:grid;
+      grid-template-rows:42px 42px;
+      gap:4px;
+      align-items:start;
+    }
+    .icon-btn{
+      width:42px;
+      height:42px;
+      padding:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#f1f1ed;
+      color:#2b2b2b;
+      border:1px solid #d8d8d1;
+      border-radius:12px;
+    }
+    .delete-btn{
+      background:#fff1f0;
+      color:var(--danger);
+      border-color:#f0c8c5;
+    }
+    .edit-icon,.trash-icon{
+      width:22px;
+      height:22px;
+      display:block;
+    }
     .empty{color:var(--muted);text-align:center;padding:12px 6px}
     .output{
       font-size:15px;
@@ -286,13 +319,26 @@
     } else {
       listEl.innerHTML = songs.map((item, i) => `
         <div class="song">
-          <div class="song-title">${i+1}. ${esc(item.song)}</div>
-          <div class="artist">${esc(item.artist)}</div>
-          ${item.memo ? `<div class="memo">「${esc(item.memo)}」</div>` : ""}
-          <div class="song-actions">
-            <button class="secondary edit-btn" data-id="${item.id}">編集</button>
-            <button class="danger delete-btn" data-id="${item.id}">削除</button>
+          <div class="song-main">
+            <div class="song-text">
+              <div class="song-title">${i+1}. ${esc(item.song)}</div>
+              <div class="artist">${esc(item.artist)}</div>
+            </div>
+            <div class="song-icon-actions">
+              <button class="icon-btn edit-btn" data-id="${item.id}" aria-label="編集" title="編集">
+                <svg class="edit-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M17.7 3.3a2.4 2.4 0 0 1 3.4 3.4L9.2 18.6 4 20l1.4-5.2L17.7 3.3Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M15.9 5.1 19 8.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <button class="icon-btn delete-btn" data-id="${item.id}" aria-label="削除" title="削除">
+                <svg class="trash-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
           </div>
+          ${item.memo ? `<div class="memo">「${esc(item.memo)}」</div>` : ""}
         </div>
       `).join("");
     }
