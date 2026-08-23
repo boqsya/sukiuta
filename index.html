@@ -98,6 +98,24 @@
     }
     .section-head h2{margin:0;font-size:20px}
     .count{color:var(--muted);font-size:14px}
+    .list-toggle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      text-align:left;
+    }
+    .duplicate-title{
+      font-size:20px;
+      font-weight:800;
+      margin-bottom:8px;
+    }
+    .duplicate-text{
+      color:#555;
+      font-size:15px;
+      line-height:1.6;
+      margin-bottom:12px;
+    }
     .song{
       border-top:1px solid var(--line);
       padding:14px 0;
@@ -108,16 +126,16 @@
     .memo{font-size:14px;line-height:1.55;color:#555;white-space:pre-wrap}
     .song-main{
       display:grid;
-      grid-template-columns:1fr 42px;
+      grid-template-columns:minmax(0,1fr) 92px;
       gap:10px;
       align-items:start;
     }
     .song-text{min-width:0}
     .song-icon-actions{
-      display:grid;
-      grid-template-rows:42px 42px;
-      gap:4px;
-      align-items:start;
+      display:flex;
+      gap:6px;
+      justify-content:flex-end;
+      align-items:center;
     }
     .icon-btn{
       width:42px;
@@ -204,23 +222,26 @@
   </section>
 
   <section class="card">
-    <button id="showBtn" class="primary full">ChatGPTへ渡す</button>
+    <button id="listToggleBtn" class="secondary full list-toggle">
+      <span>登録した曲</span>
+      <span id="count" class="count">0曲</span>
+    </button>
 
-    <div id="transferArea" class="hidden">
-      <div class="section-head" style="margin-top:16px">
-        <h2>登録した曲</h2>
-        <div id="count" class="count">0曲</div>
-      </div>
-
+    <div id="listArea" class="hidden" style="margin-top:12px">
       <div id="songList"></div>
-
-      <textarea id="output" class="output" readonly></textarea>
-
-      <div class="actions">
-        <button id="copyBtn" class="primary">コピー</button>
-        <button id="closeBtn" class="secondary">閉じる</button>
-      </div>
     </div>
+
+    <textarea id="output" class="output hidden" readonly></textarea>
+
+    <button id="showBtn" class="primary full" style="margin-top:12px">ChatGPTへ渡す</button>
+  </section>
+
+  <section id="duplicateCard" class="card hidden">
+    <div class="duplicate-title">登録済です。</div>
+    <div class="duplicate-text">別バージョンの場合は違いがわかる追記を入力してください。</div>
+    <textarea id="duplicateMemo" placeholder="例：ライブ版、別ミックス、アコースティック版"></textarea>
+    <button id="duplicateRegisterBtn" class="primary full" style="margin-top:12px">この内容で登録</button>
+    <button id="duplicateCancelBtn" class="secondary full" style="margin-top:8px">登録しない</button>
   </section>
 
   <section class="card">
@@ -244,12 +265,15 @@
   const memoToggle = document.getElementById("memoToggle");
   const addBtn = document.getElementById("addBtn");
   const showBtn = document.getElementById("showBtn");
-  const transferArea = document.getElementById("transferArea");
+  const listToggleBtn = document.getElementById("listToggleBtn");
+  const listArea = document.getElementById("listArea");
+  const duplicateCard = document.getElementById("duplicateCard");
+  const duplicateMemo = document.getElementById("duplicateMemo");
+  const duplicateRegisterBtn = document.getElementById("duplicateRegisterBtn");
+  const duplicateCancelBtn = document.getElementById("duplicateCancelBtn");
   const listEl = document.getElementById("songList");
   const countEl = document.getElementById("count");
   const outputEl = document.getElementById("output");
-  const copyBtn = document.getElementById("copyBtn");
-  const closeBtn = document.getElementById("closeBtn");
   const clearBtn = document.getElementById("clearBtn");
   const toastEl = document.getElementById("toast");
 
@@ -353,6 +377,7 @@
   }
 
   function resetForm() {
+    if (typeof duplicateCard !== "undefined") hideDuplicatePanel();
     artistEl.value = "";
     songEl.value = "";
     memoEl.value = "";
@@ -360,6 +385,30 @@
     addBtn.textContent = "この曲を追加";
     setMemoOpen(false);
     updateAddState();
+  }
+
+  function norm(s) {
+    return String(s || "").trim().toLocaleLowerCase("ja-JP")
+      .replace(/[\s　・･\-_ー]/g, "");
+  }
+
+  function findDuplicates(artist, song) {
+    return songs.filter(x =>
+      x.id !== editingId &&
+      norm(x.artist) === norm(artist) &&
+      norm(x.song) === norm(song)
+    );
+  }
+
+  function showDuplicatePanel() {
+    duplicateMemo.value = "";
+    duplicateCard.classList.remove("hidden");
+    setTimeout(() => duplicateMemo.focus(), 0);
+  }
+
+  function hideDuplicatePanel() {
+    duplicateCard.classList.add("hidden");
+    duplicateMemo.value = "";
   }
 
   function addOrUpdate() {
@@ -382,6 +431,11 @@
       const idx = songs.findIndex(x => x.id === editingId);
       if (idx >= 0) songs[idx] = {...songs[idx], artist, song, memo};
     } else {
+      const duplicates = findDuplicates(artist, song);
+      if (duplicates.length) {
+        showDuplicatePanel();
+        return;
+      }
       songs.push({
         id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()),
         artist, song, memo,
@@ -391,10 +445,11 @@
 
     saveSongs();
     resetForm();
-    if (!transferArea.classList.contains("hidden")) renderList();
+    renderList();
   }
 
   function editSong(id) {
+    hideDuplicatePanel();
     const item = songs.find(x => x.id === id);
     if (!item) return;
     editingId = id;
@@ -404,7 +459,6 @@
     setMemoOpen(Boolean(item.memo));
     addBtn.textContent = "修正を保存";
     updateAddState();
-    transferArea.classList.add("hidden");
     window.scrollTo({top:0, behavior:"smooth"});
   }
 
@@ -444,16 +498,41 @@
   });
   addBtn.addEventListener("click", addOrUpdate);
 
-  showBtn.addEventListener("click", () => {
+  showBtn.addEventListener("click", copyOutput);
+
+  listToggleBtn.addEventListener("click", () => {
     renderList();
-    transferArea.classList.remove("hidden");
+    listArea.classList.toggle("hidden");
   });
 
-  closeBtn.addEventListener("click", () => {
-    transferArea.classList.add("hidden");
+  duplicateRegisterBtn.addEventListener("click", () => {
+    const artist = artistEl.value.trim();
+    const song = songEl.value.trim();
+    const memo = duplicateMemo.value.trim();
+
+    if (!memo) {
+      alert("違いがわかる追記を入力してください。");
+      duplicateMemo.focus();
+      return;
+    }
+
+    songs.push({
+      id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()),
+      artist,
+      song,
+      memo,
+      createdAt:new Date().toISOString()
+    });
+    saveSongs();
+    hideDuplicatePanel();
+    resetForm();
+    renderList();
   });
 
-  copyBtn.addEventListener("click", copyOutput);
+  duplicateCancelBtn.addEventListener("click", () => {
+    hideDuplicatePanel();
+    resetForm();
+  });
 
   clearBtn.addEventListener("click", () => {
     if (!songs.length) return;
@@ -461,9 +540,10 @@
     songs = [];
     saveSongs();
     resetForm();
-    if (!transferArea.classList.contains("hidden")) renderList();
+    renderList();
   });
 
+  renderList();
   updateAddState();
   setTimeout(updateAddState, 0);
 })();
