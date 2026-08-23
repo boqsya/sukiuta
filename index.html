@@ -421,6 +421,17 @@
 
 
 
+
+<div id="chatgptImportModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="chatgptImportTitle">
+  <div class="modal">
+    <div id="chatgptImportTitle" class="modal-title">ChatGPTから反映</div>
+    <div class="modal-text">ChatGPTが返した「MYTRACKS_UPDATE」データをそのまま貼り付けてください。</div>
+    <textarea id="chatgptImportText" placeholder="ここに貼り付け"></textarea>
+    <button id="chatgptImportApplyBtn" class="primary full" style="margin-top:12px">反映する</button>
+    <button id="chatgptImportBackBtn" class="secondary full" style="margin-top:8px">戻る</button>
+  </div>
+</div>
+
 <div id="editModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="editTitle">
   <div class="modal">
     <div id="editTitle" class="modal-title">曲を編集</div>
@@ -446,6 +457,7 @@
     <div id="settingsTitle" class="modal-title">設定</div>
     <div class="settings-list">
       <button id="showBtn" class="primary full">ChatGPTへ渡す</button>
+      <button id="importFromChatGPTBtn" class="secondary full">ChatGPTから反映</button>
       <button id="backupBtn" class="secondary full">バックアップする</button>
       <button id="restoreBtn" class="secondary full">バックアップを復元</button>
       <button id="clearBtn" class="danger full">全曲削除</button>
@@ -497,6 +509,12 @@
   const restoreInput = document.getElementById("restoreInput");
   const clearBtn = document.getElementById("clearBtn");
   const toastEl = document.getElementById("toast");
+
+  const importFromChatGPTBtn = document.getElementById("importFromChatGPTBtn");
+  const chatgptImportModal = document.getElementById("chatgptImportModal");
+  const chatgptImportText = document.getElementById("chatgptImportText");
+  const chatgptImportApplyBtn = document.getElementById("chatgptImportApplyBtn");
+  const chatgptImportBackBtn = document.getElementById("chatgptImportBackBtn");
 
   const editModal = document.getElementById("editModal");
   const editArtist = document.getElementById("editArtist");
@@ -802,7 +820,14 @@
     lines.push(
       "【お願い】",
       "・既存の好み情報を維持したまま今回分を追加・更新してください。",
-      "・今後セットリストを頼んだときは、これまで蓄積した登録曲全体から流れを重視して組んでください。"
+      "・今後セットリストを頼んだときは、これまで蓄積した登録曲全体から流れを重視して組んでください。",
+      "",
+      "【アプリへ正式名称を戻す場合】",
+      "アーティスト名または曲名に修正が必要なものだけ、説明とは別に次の形式で出してください。",
+      "MYTRACKS_UPDATE_BEGIN",
+      "元アーティスト名\\t元曲名\\t正式アーティスト名\\t正式曲名",
+      "MYTRACKS_UPDATE_END",
+      "※区切りはタブ文字。確実に確認できたものだけ出し、推測では修正しないでください。"
     );
 
     return lines.join("\n");
@@ -830,6 +855,93 @@
     state.pendingDeletes = [];
     saveState();
     showToast("ChatGPTへ渡す内容をコピーしました");
+  }
+
+  function showChatGPTImportModal() {
+    hideSettingsModal();
+    chatgptImportText.value = "";
+    chatgptImportModal.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    setTimeout(() => chatgptImportText.focus(), 0);
+  }
+
+  function hideChatGPTImportModal() {
+    chatgptImportModal.classList.add("hidden");
+    document.body.style.overflow = "";
+    chatgptImportText.value = "";
+  }
+
+  function parseChatGPTUpdates(text) {
+    const begin = "MYTRACKS_UPDATE_BEGIN";
+    const end = "MYTRACKS_UPDATE_END";
+    const start = text.indexOf(begin);
+    const finish = text.indexOf(end);
+    if (start < 0 || finish < 0 || finish <= start) {
+      throw new Error("format");
+    }
+
+    const body = text.slice(start + begin.length, finish).trim();
+    if (!body) throw new Error("empty");
+
+    const rows = body.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    return rows.map(row => {
+      const cols = row.split("\t").map(x => x.trim());
+      if (cols.length !== 4 || cols.some(x => !x)) throw new Error("columns");
+      return {
+        oldArtist:cols[0],
+        oldSong:cols[1],
+        newArtist:cols[2],
+        newSong:cols[3]
+      };
+    });
+  }
+
+  function applyChatGPTUpdates() {
+    let updates;
+    try {
+      updates = parseChatGPTUpdates(chatgptImportText.value);
+    } catch {
+      alert("反映用データの形式を確認できません。ChatGPTが返したMYTRACKS_UPDATEデータをそのまま貼り付けてください。");
+      return;
+    }
+
+    const planned = [];
+    const missing = [];
+
+    updates.forEach(u => {
+      const matches = state.songs.filter(x =>
+        norm(x.artist) === norm(u.oldArtist) &&
+        norm(x.song) === norm(u.oldSong)
+      );
+      if (matches.length === 1) {
+        planned.push({item:matches[0], update:u});
+      } else {
+        missing.push(`${u.oldArtist} / ${u.oldSong}`);
+      }
+    });
+
+    if (!planned.length) {
+      alert("一致する登録曲がありませんでした。");
+      return;
+    }
+
+    const preview = planned.map(x =>
+      `${x.item.artist} / ${x.item.song}\n→ ${x.update.newArtist} / ${x.update.newSong}`
+    ).join("\n\n");
+
+    const extra = missing.length ? `\n\n一致しなかった曲：${missing.length}件` : "";
+    if (!confirm(`${planned.length}件を次の正式名称へ変更します。\n\n${preview}${extra}\n\n反映しますか？`)) return;
+
+    planned.forEach(({item,update}) => {
+      item.artist = update.newArtist;
+      item.song = update.newSong;
+      item.sent = false;
+    });
+
+    saveState();
+    renderList();
+    hideChatGPTImportModal();
+    showToast(`${planned.length}件を反映しました`);
   }
 
   function showToast(msg) {
@@ -941,6 +1053,10 @@
     hideDuplicateModal();
     resetForm();
   });
+
+  importFromChatGPTBtn.addEventListener("click", showChatGPTImportModal);
+  chatgptImportBackBtn.addEventListener("click", hideChatGPTImportModal);
+  chatgptImportApplyBtn.addEventListener("click", applyChatGPTUpdates);
 
   editSaveBtn.addEventListener("click", () => {
     if (!editingId) return;
