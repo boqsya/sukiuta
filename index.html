@@ -284,6 +284,10 @@
       color:#4da3ff;
       border-color:#4da3ff;
     }
+    .sent-toggle.unconfirmed{
+      color:#ff6b6b;
+      border-color:#ff6b6b;
+    }
     .icon-btn{
       width:42px;
       height:42px;
@@ -504,6 +508,7 @@
 (() => {
   const STORAGE_KEY = "sukiuta_v2_data";
   const LEGACY_KEY = "sukiuta_v1_songs";
+  const STATUS_RESET_KEY = "sukiuta_status_reset_v1";
 
   let state = loadState();
   let editingId = null;
@@ -561,14 +566,24 @@
         const parsed = JSON.parse(raw);
         if (parsed && Array.isArray(parsed.songs)) {
           parsed.pendingDeletes = Array.isArray(parsed.pendingDeletes) ? parsed.pendingDeletes : [];
+          const shouldResetStatuses = localStorage.getItem(STATUS_RESET_KEY) !== "done";
           parsed.songs = parsed.songs.map((x, i) => ({
             id: x.id || newId(),
             artist: String(x.artist || ""),
             song: String(x.song || ""),
             memo: String(x.memo || ""),
-            sent: Boolean(x.sent),
+            sent: shouldResetStatuses ? false : Boolean(x.sent),
+            reviewStatus: shouldResetStatuses
+              ? "pending"
+              : (["pending","confirmed","unconfirmed"].includes(x.reviewStatus)
+                  ? x.reviewStatus
+                  : (x.sent ? "confirmed" : "pending")),
             createdAt: x.createdAt || new Date(Date.now() + i).toISOString()
           }));
+          if (shouldResetStatuses) {
+            localStorage.setItem(STATUS_RESET_KEY, "done");
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+          }
           return parsed;
         }
       }
@@ -585,6 +600,7 @@
               song: String(x.song || ""),
               memo: String(x.memo || ""),
               sent: false,
+              reviewStatus: "pending",
               createdAt: x.createdAt || new Date(Date.now() + i).toISOString()
             })),
             pendingDeletes: []
@@ -679,11 +695,11 @@
               </button>
             </div>
             <button
-              class="sent-toggle ${item.sent ? "sent" : ""}"
+              class="sent-toggle ${item.reviewStatus === "unconfirmed" ? "unconfirmed" : (item.sent ? "sent" : "")}"
               data-id="${item.id}"
               aria-pressed="${item.sent ? "true" : "false"}"
-              title="${item.sent ? "送信済み。押すと未送信に戻します" : "未送信。押すと送信済みにします"}"
-            >送信済</button>
+              title="${item.reviewStatus === "unconfirmed" ? "未確認。押すと確認済みにします" : (item.sent ? "確認済み。押すと未送信に戻します" : "未送信")}"
+            >${item.reviewStatus === "unconfirmed" ? "未確認" : (item.sent ? "確認済" : "未送信")}</button>
           </div>
         </div>
         ${item.memo ? `<div class="memo">追記：${esc(item.memo)}</div>` : ""}
@@ -704,7 +720,18 @@
   function toggleSent(id) {
     const item = state.songs.find(x => x.id === id);
     if (!item) return;
-    item.sent = !item.sent;
+
+    if (item.reviewStatus === "unconfirmed") {
+      item.reviewStatus = "confirmed";
+      item.sent = true;
+    } else if (item.sent) {
+      item.reviewStatus = "pending";
+      item.sent = false;
+    } else {
+      item.reviewStatus = "confirmed";
+      item.sent = true;
+    }
+
     saveState();
     renderList();
   }
@@ -784,6 +811,7 @@
       song,
       memo,
       sent:false,
+      reviewStatus:"pending",
       createdAt:new Date().toISOString()
     });
     saveState();
@@ -892,7 +920,9 @@
       outputEl.classList.add("hidden");
     }
 
-    state.songs = state.songs.map(x => ({...x, sent:true}));
+    state.songs = state.songs.map(x => (
+      x.sent ? x : {...x, sent:true, reviewStatus:"confirmed"}
+    ));
     state.pendingDeletes = [];
     saveState();
     renderList();
@@ -977,7 +1007,8 @@
     planned.forEach(({item,update}) => {
       item.artist = update.newArtist;
       item.song = update.newSong;
-      // 正式名称の反映だけでは送信状態を変更しない
+      item.sent = true;
+      item.reviewStatus = "confirmed";
     });
 
     saveState();
@@ -1029,6 +1060,9 @@
             song:String(x.song || ""),
             memo:String(x.memo || ""),
             sent:Boolean(x.sent),
+            reviewStatus:["pending","confirmed","unconfirmed"].includes(x.reviewStatus)
+              ? x.reviewStatus
+              : (x.sent ? "confirmed" : "pending"),
             createdAt:x.createdAt || new Date(Date.now()+i).toISOString()
           })),
           pendingDeletes:Array.isArray(data.pendingDeletes) ? data.pendingDeletes : []
@@ -1083,6 +1117,7 @@
       song,
       memo,
       sent:false,
+      reviewStatus:"pending",
       createdAt:new Date().toISOString()
     });
     saveState();
