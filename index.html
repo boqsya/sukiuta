@@ -41,7 +41,7 @@
       margin-bottom:14px;
     }
     label{display:block;font-weight:700;font-size:15px;margin:0 0 7px}
-    input, textarea{
+    input, textarea, select{
       width:100%;
       border:1px solid #cfcfc8;
       border-radius:14px;
@@ -53,11 +53,15 @@
       appearance:none;
     }
     textarea{min-height:84px;resize:vertical;line-height:1.5}
+    select{
+      font-size:15px;
+      padding:10px 12px;
+      background:#fff;
+    }
     .field{margin-bottom:14px}
-    .field:last-child{margin-bottom:0}
     .song-row{
       display:grid;
-      grid-template-columns:1fr auto;
+      grid-template-columns:minmax(0,1fr) 74px;
       gap:8px;
       align-items:end;
     }
@@ -82,6 +86,8 @@
       background:#ecece8;
       color:var(--text);
       border:1px solid #d5d5cf;
+      padding-left:8px;
+      padding-right:8px;
     }
     .toggle.on{
       background:var(--green);
@@ -97,33 +103,30 @@
       margin-bottom:10px;
     }
     .section-head h2{margin:0;font-size:20px}
-    .count{color:var(--muted);font-size:14px}
+    .count{font-size:14px;color:#444}
     .list-toggle{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:12px;
       text-align:left;
+      background:#fff;
+      color:var(--text);
+      border:1px solid #cfcfc8;
     }
-    .duplicate-title{
-      font-size:20px;
-      font-weight:800;
+    .sort-wrap{
+      display:grid;
+      grid-template-columns:auto 1fr;
+      gap:10px;
+      align-items:center;
       margin-bottom:8px;
     }
-    .duplicate-text{
-      color:#555;
-      font-size:15px;
-      line-height:1.6;
-      margin-bottom:12px;
-    }
+    .sort-wrap span{font-size:14px;color:#555}
     .song{
       border-top:1px solid var(--line);
-      padding:14px 0;
+      padding:13px 0;
     }
     .song:first-of-type{border-top:0}
-    .song-title{font-size:18px;font-weight:800;margin-bottom:4px;overflow-wrap:anywhere}
-    .artist{font-size:15px;color:#444;margin-bottom:6px;overflow-wrap:anywhere}
-    .memo{font-size:14px;line-height:1.55;color:#555;white-space:pre-wrap}
     .song-main{
       display:grid;
       grid-template-columns:minmax(0,1fr) 92px;
@@ -131,6 +134,9 @@
       align-items:start;
     }
     .song-text{min-width:0}
+    .song-title{font-size:18px;font-weight:800;margin-bottom:4px;overflow-wrap:anywhere}
+    .artist{font-size:15px;color:#444;margin-bottom:6px;overflow-wrap:anywhere}
+    .memo{font-size:14px;line-height:1.55;color:#555;white-space:pre-wrap}
     .song-icon-actions{
       display:flex;
       gap:6px;
@@ -154,23 +160,14 @@
       color:var(--danger);
       border-color:#f0c8c5;
     }
-    .edit-icon,.trash-icon{
-      width:22px;
-      height:22px;
-      display:block;
-    }
+    .edit-icon,.trash-icon{width:22px;height:22px;display:block}
     .empty{color:var(--muted);text-align:center;padding:12px 6px}
-    .output{
-      font-size:15px;
-      line-height:1.65;
-      min-height:210px;
-      margin-top:12px;
-    }
-    .actions{
+    .output{font-size:15px;line-height:1.65;min-height:210px}
+    .backup-actions{
       display:grid;
       grid-template-columns:1fr 1fr;
       gap:10px;
-      margin-top:10px;
+      margin-top:12px;
     }
     .toast{
       position:fixed;
@@ -185,13 +182,33 @@
       opacity:0;
       pointer-events:none;
       transition:.2s;
-      z-index:10;
+      z-index:30;
     }
     .toast.show{opacity:1}
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.48);
+      z-index:20;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .modal{
+      width:min(100%,520px);
+      background:#fff;
+      border-radius:20px;
+      padding:18px;
+      box-shadow:0 18px 50px rgba(0,0,0,.25);
+    }
+    .modal-title{font-size:21px;font-weight:800;margin-bottom:8px}
+    .modal-text{font-size:15px;line-height:1.6;color:#555;margin-bottom:12px}
+    .modal textarea{min-height:96px}
     @media(max-width:520px){
-      .song-row{grid-template-columns:1fr auto}
-      .toggle{width:70px;min-width:70px;padding:13px 8px;font-size:16px}
-      .actions{grid-template-columns:1fr}
+      .song-row{grid-template-columns:minmax(0,1fr) 70px}
+      .toggle{width:70px;min-width:70px;font-size:16px}
+      .backup-actions{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -222,12 +239,20 @@
   </section>
 
   <section class="card">
-    <button id="listToggleBtn" class="secondary full list-toggle">
+    <button id="listToggleBtn" class="list-toggle full">
       <span>登録した曲</span>
       <span id="count" class="count">0曲</span>
     </button>
 
     <div id="listArea" class="hidden" style="margin-top:12px">
+      <div class="sort-wrap">
+        <span>並べ替え</span>
+        <select id="sortSelect">
+          <option value="registered">登録順</option>
+          <option value="artist">アーティスト別</option>
+          <option value="song">曲名別</option>
+        </select>
+      </div>
       <div id="songList"></div>
     </div>
 
@@ -236,12 +261,15 @@
     <button id="showBtn" class="primary full" style="margin-top:12px">ChatGPTへ渡す</button>
   </section>
 
-  <section id="duplicateCard" class="card hidden">
-    <div class="duplicate-title">登録済です。</div>
-    <div class="duplicate-text">別バージョンの場合は違いがわかる追記を入力してください。</div>
-    <textarea id="duplicateMemo" placeholder="例：ライブ版、別ミックス、アコースティック版"></textarea>
-    <button id="duplicateRegisterBtn" class="primary full" style="margin-top:12px">この内容で登録</button>
-    <button id="duplicateCancelBtn" class="secondary full" style="margin-top:8px">登録しない</button>
+  <section class="card">
+    <div class="section-head">
+      <h2>バックアップ</h2>
+    </div>
+    <div class="backup-actions">
+      <button id="backupBtn" class="secondary">バックアップ保存</button>
+      <button id="restoreBtn" class="secondary">バックアップ復元</button>
+    </div>
+    <input id="restoreInput" type="file" accept=".json,application/json" class="hidden">
   </section>
 
   <section class="card">
@@ -249,14 +277,27 @@
   </section>
 </main>
 
+<div id="duplicateModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="dupTitle">
+  <div class="modal">
+    <div id="dupTitle" class="modal-title">登録済です。</div>
+    <div class="modal-text">別バージョンの場合は違いがわかる追記を入力してください。</div>
+    <textarea id="duplicateMemo" placeholder="例：ライブ版、別ミックス、アコースティック版"></textarea>
+    <button id="duplicateRegisterBtn" class="primary full" style="margin-top:12px">この内容で登録</button>
+    <button id="duplicateCancelBtn" class="secondary full" style="margin-top:8px">登録しない</button>
+  </div>
+</div>
+
 <div id="toast" class="toast">コピーしました</div>
 
 <script>
 (() => {
-  const STORAGE_KEY = "sukiuta_v1_songs";
-  let songs = loadSongs();
+  const STORAGE_KEY = "sukiuta_v2_data";
+  const LEGACY_KEY = "sukiuta_v1_songs";
+
+  let state = loadState();
   let editingId = null;
   let memoOpen = false;
+  let sortMode = "registered";
 
   const artistEl = document.getElementById("artist");
   const songEl = document.getElementById("song");
@@ -264,31 +305,71 @@
   const memoWrap = document.getElementById("memoWrap");
   const memoToggle = document.getElementById("memoToggle");
   const addBtn = document.getElementById("addBtn");
-  const showBtn = document.getElementById("showBtn");
   const listToggleBtn = document.getElementById("listToggleBtn");
   const listArea = document.getElementById("listArea");
-  const duplicateCard = document.getElementById("duplicateCard");
-  const duplicateMemo = document.getElementById("duplicateMemo");
-  const duplicateRegisterBtn = document.getElementById("duplicateRegisterBtn");
-  const duplicateCancelBtn = document.getElementById("duplicateCancelBtn");
+  const sortSelect = document.getElementById("sortSelect");
   const listEl = document.getElementById("songList");
   const countEl = document.getElementById("count");
   const outputEl = document.getElementById("output");
+  const showBtn = document.getElementById("showBtn");
+  const backupBtn = document.getElementById("backupBtn");
+  const restoreBtn = document.getElementById("restoreBtn");
+  const restoreInput = document.getElementById("restoreInput");
   const clearBtn = document.getElementById("clearBtn");
   const toastEl = document.getElementById("toast");
 
-  function loadSongs() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
+  const duplicateModal = document.getElementById("duplicateModal");
+  const duplicateMemo = document.getElementById("duplicateMemo");
+  const duplicateRegisterBtn = document.getElementById("duplicateRegisterBtn");
+  const duplicateCancelBtn = document.getElementById("duplicateCancelBtn");
+
+  function newId() {
+    return (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
   }
 
-  function saveSongs() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(songs));
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.songs)) {
+          parsed.pendingDeletes = Array.isArray(parsed.pendingDeletes) ? parsed.pendingDeletes : [];
+          parsed.songs = parsed.songs.map((x, i) => ({
+            id: x.id || newId(),
+            artist: String(x.artist || ""),
+            song: String(x.song || ""),
+            memo: String(x.memo || ""),
+            sent: Boolean(x.sent),
+            createdAt: x.createdAt || new Date(Date.now() + i).toISOString()
+          }));
+          return parsed;
+        }
+      }
+
+      const legacyRaw = localStorage.getItem(LEGACY_KEY);
+      if (legacyRaw) {
+        const legacy = JSON.parse(legacyRaw);
+        if (Array.isArray(legacy)) {
+          return {
+            version: 2,
+            songs: legacy.map((x, i) => ({
+              id: x.id || newId(),
+              artist: String(x.artist || ""),
+              song: String(x.song || ""),
+              memo: String(x.memo || ""),
+              sent: false,
+              createdAt: x.createdAt || new Date(Date.now() + i).toISOString()
+            })),
+            pendingDeletes: []
+          };
+        }
+      }
+    } catch {}
+    return {version:2, songs:[], pendingDeletes:[]};
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
 
   function esc(s) {
@@ -297,10 +378,9 @@
     }[c]));
   }
 
-  function updateAddState() {
-    const ready = artistEl.value.trim().length > 0 && songEl.value.trim().length > 0;
-    addBtn.style.opacity = ready ? "1" : "0.55";
-    addBtn.setAttribute("aria-disabled", "false");
+  function norm(s) {
+    return String(s || "").trim().toLocaleLowerCase("ja-JP")
+      .replace(/[\s　・･\-_ー]/g, "");
   }
 
   function setMemoOpen(open) {
@@ -312,61 +392,68 @@
     if (open) setTimeout(() => memoEl.focus(), 0);
   }
 
-  function buildOutput() {
-    if (!songs.length) return "登録曲はまだありません。";
-    const lines = [
-      "以下は私の好きな曲リストです。",
-      "これまでの好み情報は削除せず、この内容を追加して分析してください。",
-      "曲名・アーティスト名に表記ゆれや略称がある場合、確実に判断できるものだけ正式名称として整理してください。",
-      "判断できないものは推測せず確認してください。",
-      "",
-      "【好きな曲】"
-    ];
-    songs.forEach((item, i) => {
-      lines.push(`${String(i+1).padStart(2,"0")}. ${item.artist} / ${item.song}`);
-      if (item.memo) lines.push(`    ひとこと：${item.memo}`);
-    });
-    lines.push(
-      "",
-      "【お願い】",
-      "・この曲リストから私の音楽の好みを分析してください。",
-      "・過去に分かっている好みは削除せず、新しく分かった傾向を追加してください。",
-      "・登録済みの曲だけを使って、曲の流れを重視したセットリストを作ってください。"
-    );
-    return lines.join("\n");
+  function resetForm() {
+    artistEl.value = "";
+    songEl.value = "";
+    memoEl.value = "";
+    editingId = null;
+    addBtn.textContent = "この曲を追加";
+    setMemoOpen(false);
+  }
+
+  function getSortedSongs() {
+    const arr = [...state.songs];
+    if (sortMode === "artist") {
+      arr.sort((a,b) =>
+        a.artist.localeCompare(b.artist, "ja") ||
+        a.song.localeCompare(b.song, "ja") ||
+        a.createdAt.localeCompare(b.createdAt)
+      );
+    } else if (sortMode === "song") {
+      arr.sort((a,b) =>
+        a.song.localeCompare(b.song, "ja") ||
+        a.artist.localeCompare(b.artist, "ja") ||
+        a.createdAt.localeCompare(b.createdAt)
+      );
+    } else {
+      arr.sort((a,b) => a.createdAt.localeCompare(b.createdAt));
+    }
+    return arr;
   }
 
   function renderList() {
-    countEl.textContent = `${songs.length}曲`;
+    countEl.textContent = `${state.songs.length}曲`;
+    const songs = getSortedSongs();
+
     if (!songs.length) {
       listEl.innerHTML = `<div class="empty">まだ曲がありません。</div>`;
-    } else {
-      listEl.innerHTML = songs.map((item, i) => `
-        <div class="song">
-          <div class="song-main">
-            <div class="song-text">
-              <div class="song-title">${i+1}. ${esc(item.song)}</div>
-              <div class="artist">${esc(item.artist)}</div>
-            </div>
-            <div class="song-icon-actions">
-              <button class="icon-btn edit-btn" data-id="${item.id}" aria-label="編集" title="編集">
-                <svg class="edit-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M17.7 3.3a2.4 2.4 0 0 1 3.4 3.4L9.2 18.6 4 20l1.4-5.2L17.7 3.3Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M15.9 5.1 19 8.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
-                </svg>
-              </button>
-              <button class="icon-btn delete-btn" data-id="${item.id}" aria-label="削除" title="削除">
-                <svg class="trash-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-          ${item.memo ? `<div class="memo">「${esc(item.memo)}」</div>` : ""}
-        </div>
-      `).join("");
+      return;
     }
-    outputEl.value = buildOutput();
+
+    listEl.innerHTML = songs.map(item => `
+      <div class="song">
+        <div class="song-main">
+          <div class="song-text">
+            <div class="song-title">${esc(item.song)}</div>
+            <div class="artist">${esc(item.artist)}</div>
+          </div>
+          <div class="song-icon-actions">
+            <button class="icon-btn edit-btn" data-id="${item.id}" aria-label="編集" title="編集">
+              <svg class="edit-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M17.7 3.3a2.4 2.4 0 0 1 3.4 3.4L9.2 18.6 4 20l1.4-5.2L17.7 3.3Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M15.9 5.1 19 8.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <button class="icon-btn delete-btn" data-id="${item.id}" aria-label="削除" title="削除">
+              <svg class="trash-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        ${item.memo ? `<div class="memo">追記：${esc(item.memo)}</div>` : ""}
+      </div>
+    `).join("");
 
     document.querySelectorAll(".edit-btn").forEach(btn => {
       btn.addEventListener("click", () => editSong(btn.dataset.id));
@@ -376,38 +463,24 @@
     });
   }
 
-  function resetForm() {
-    if (typeof duplicateCard !== "undefined") hideDuplicatePanel();
-    artistEl.value = "";
-    songEl.value = "";
-    memoEl.value = "";
-    editingId = null;
-    addBtn.textContent = "この曲を追加";
-    setMemoOpen(false);
-    updateAddState();
-  }
-
-  function norm(s) {
-    return String(s || "").trim().toLocaleLowerCase("ja-JP")
-      .replace(/[\s　・･\-_ー]/g, "");
-  }
-
   function findDuplicates(artist, song) {
-    return songs.filter(x =>
+    return state.songs.filter(x =>
       x.id !== editingId &&
       norm(x.artist) === norm(artist) &&
       norm(x.song) === norm(song)
     );
   }
 
-  function showDuplicatePanel() {
+  function showDuplicateModal() {
     duplicateMemo.value = "";
-    duplicateCard.classList.remove("hidden");
+    duplicateModal.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
     setTimeout(() => duplicateMemo.focus(), 0);
   }
 
-  function hideDuplicatePanel() {
-    duplicateCard.classList.add("hidden");
+  function hideDuplicateModal() {
+    duplicateModal.classList.add("hidden");
+    document.body.style.overflow = "";
     duplicateMemo.value = "";
   }
 
@@ -428,29 +501,42 @@
     }
 
     if (editingId) {
-      const idx = songs.findIndex(x => x.id === editingId);
-      if (idx >= 0) songs[idx] = {...songs[idx], artist, song, memo};
-    } else {
-      const duplicates = findDuplicates(artist, song);
-      if (duplicates.length) {
-        showDuplicatePanel();
-        return;
+      const idx = state.songs.findIndex(x => x.id === editingId);
+      if (idx >= 0) {
+        state.songs[idx] = {
+          ...state.songs[idx],
+          artist,
+          song,
+          memo,
+          sent:false
+        };
       }
-      songs.push({
-        id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()),
-        artist, song, memo,
-        createdAt:new Date().toISOString()
-      });
+      saveState();
+      resetForm();
+      renderList();
+      return;
     }
 
-    saveSongs();
+    if (findDuplicates(artist, song).length) {
+      showDuplicateModal();
+      return;
+    }
+
+    state.songs.push({
+      id:newId(),
+      artist,
+      song,
+      memo,
+      sent:false,
+      createdAt:new Date().toISOString()
+    });
+    saveState();
     resetForm();
     renderList();
   }
 
   function editSong(id) {
-    hideDuplicatePanel();
-    const item = songs.find(x => x.id === id);
+    const item = state.songs.find(x => x.id === id);
     if (!item) return;
     editingId = id;
     artistEl.value = item.artist;
@@ -458,52 +544,166 @@
     memoEl.value = item.memo || "";
     setMemoOpen(Boolean(item.memo));
     addBtn.textContent = "修正を保存";
-    updateAddState();
     window.scrollTo({top:0, behavior:"smooth"});
   }
 
   function deleteSong(id) {
-    const item = songs.find(x => x.id === id);
+    const item = state.songs.find(x => x.id === id);
     if (!item) return;
     if (!confirm(`「${item.song}」を削除しますか？`)) return;
-    songs = songs.filter(x => x.id !== id);
-    saveSongs();
+
+    if (item.sent) {
+      state.pendingDeletes.push({
+        artist:item.artist,
+        song:item.song,
+        memo:item.memo || ""
+      });
+    }
+    state.songs = state.songs.filter(x => x.id !== id);
+    saveState();
+    if (editingId === id) resetForm();
     renderList();
+  }
+
+  function buildHandoffText() {
+    const unsent = state.songs.filter(x => !x.sent);
+    const deletes = state.pendingDeletes;
+
+    if (!unsent.length && !deletes.length) return "";
+
+    const lines = [
+      "以下は「すきなうた」アプリからの追加・変更分です。",
+      "これまで保存している私の好きな曲・好み情報は削除せず、今回の内容を反映してください。",
+      "表記ゆれや略称は、確実に判断できるものだけ正式名称として整理してください。",
+      "判断できないものは推測せず確認してください。",
+      ""
+    ];
+
+    if (unsent.length) {
+      lines.push("【追加・変更】");
+      unsent.forEach(item => {
+        lines.push(`- ${item.artist} / ${item.song}`);
+        if (item.memo) lines.push(`  追記：${item.memo}`);
+      });
+      lines.push("");
+    }
+
+    if (deletes.length) {
+      lines.push("【削除】");
+      deletes.forEach(item => {
+        lines.push(`- ${item.artist} / ${item.song}`);
+        if (item.memo) lines.push(`  追記：${item.memo}`);
+      });
+      lines.push("");
+    }
+
+    lines.push(
+      "【お願い】",
+      "・既存の好み情報を維持したまま今回分を追加・更新してください。",
+      "・今後セットリストを頼んだときは、これまで蓄積した登録曲全体から流れを重視して組んでください。"
+    );
+
+    return lines.join("\n");
+  }
+
+  async function handoffToChatGPT() {
+    const text = buildHandoffText();
+    if (!text) {
+      alert("新しく渡す曲はありません。");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      outputEl.value = text;
+      outputEl.classList.remove("hidden");
+      outputEl.focus();
+      outputEl.select();
+      document.execCommand("copy");
+      outputEl.classList.add("hidden");
+    }
+
+    state.songs = state.songs.map(x => ({...x, sent:true}));
+    state.pendingDeletes = [];
+    saveState();
+    showToast("ChatGPTへ渡す内容をコピーしました");
   }
 
   function showToast(msg) {
     toastEl.textContent = msg;
     toastEl.classList.add("show");
-    setTimeout(() => toastEl.classList.remove("show"), 1400);
+    setTimeout(() => toastEl.classList.remove("show"), 1700);
   }
 
-  async function copyOutput() {
-    const text = buildOutput();
-    outputEl.value = text;
-    try {
-      await navigator.clipboard.writeText(text);
-      showToast("コピーしました");
-    } catch {
-      outputEl.focus();
-      outputEl.select();
-      document.execCommand("copy");
-      showToast("コピーしました");
-    }
+  function backupData() {
+    const data = {
+      app:"すきなうた",
+      formatVersion:1,
+      exportedAt:new Date().toISOString(),
+      songs:state.songs,
+      pendingDeletes:state.pendingDeletes
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const d = new Date();
+    const stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+    a.href = url;
+    a.download = `sukiuta_backup_${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function restoreData(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(String(reader.result || ""));
+        if (!data || !Array.isArray(data.songs)) throw new Error("bad");
+        if (!confirm(`${data.songs.length}曲のバックアップを復元しますか？\n現在の登録内容は置き換わります。`)) return;
+
+        state = {
+          version:2,
+          songs:data.songs.map((x, i) => ({
+            id:x.id || newId(),
+            artist:String(x.artist || ""),
+            song:String(x.song || ""),
+            memo:String(x.memo || ""),
+            sent:Boolean(x.sent),
+            createdAt:x.createdAt || new Date(Date.now()+i).toISOString()
+          })),
+          pendingDeletes:Array.isArray(data.pendingDeletes) ? data.pendingDeletes : []
+        };
+        saveState();
+        resetForm();
+        renderList();
+        showToast("バックアップを復元しました");
+      } catch {
+        alert("このバックアップファイルは読み込めません。");
+      } finally {
+        restoreInput.value = "";
+      }
+    };
+    reader.readAsText(file);
   }
 
   memoToggle.addEventListener("click", () => setMemoOpen(!memoOpen));
-  ["input","change","keyup","blur"].forEach(evt => {
-    artistEl.addEventListener(evt, updateAddState);
-    songEl.addEventListener(evt, updateAddState);
-  });
   addBtn.addEventListener("click", addOrUpdate);
-
-  showBtn.addEventListener("click", copyOutput);
 
   listToggleBtn.addEventListener("click", () => {
     renderList();
     listArea.classList.toggle("hidden");
   });
+
+  sortSelect.addEventListener("change", () => {
+    sortMode = sortSelect.value;
+    renderList();
+  });
+
+  showBtn.addEventListener("click", handoffToChatGPT);
 
   duplicateRegisterBtn.addEventListener("click", () => {
     const artist = artistEl.value.trim();
@@ -516,36 +716,43 @@
       return;
     }
 
-    songs.push({
-      id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()),
+    state.songs.push({
+      id:newId(),
       artist,
       song,
       memo,
+      sent:false,
       createdAt:new Date().toISOString()
     });
-    saveSongs();
-    hideDuplicatePanel();
+    saveState();
+    hideDuplicateModal();
     resetForm();
     renderList();
   });
 
   duplicateCancelBtn.addEventListener("click", () => {
-    hideDuplicatePanel();
+    hideDuplicateModal();
     resetForm();
   });
 
+  backupBtn.addEventListener("click", backupData);
+  restoreBtn.addEventListener("click", () => restoreInput.click());
+  restoreInput.addEventListener("change", () => {
+    const file = restoreInput.files && restoreInput.files[0];
+    if (file) restoreData(file);
+  });
+
   clearBtn.addEventListener("click", () => {
-    if (!songs.length) return;
+    if (!state.songs.length) return;
     if (!confirm("登録した曲をすべて削除しますか？")) return;
-    songs = [];
-    saveSongs();
+    state.songs = [];
+    state.pendingDeletes = [];
+    saveState();
     resetForm();
     renderList();
   });
 
   renderList();
-  updateAddState();
-  setTimeout(updateAddState, 0);
 })();
 </script>
 </body>
