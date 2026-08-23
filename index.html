@@ -250,6 +250,14 @@
       margin-bottom:6px;
       overflow-wrap:anywhere;
     }
+    .album-line{
+      font-size:12px;
+      line-height:1.35;
+      color:#8e8981;
+      min-height:16px;
+      overflow-wrap:anywhere;
+      margin-bottom:4px;
+    }
     .memo{
       font-size:14px;
       line-height:1.55;
@@ -434,15 +442,20 @@
   <section class="card">
     <div class="field">
       <label for="artist">アーティスト</label>
-      <input id="artist" type="text" placeholder="例：バクチク" autocomplete="off">
+      <input id="artist" type="text" autocomplete="off">
     </div>
 
     <div class="song-row">
       <div class="field">
         <label for="song">曲名</label>
-        <input id="song" type="text" placeholder="例：ムーンライト" autocomplete="off">
+        <input id="song" type="text" autocomplete="off">
       </div>
       <button id="memoToggle" type="button" class="toggle" aria-pressed="false">追記</button>
+    </div>
+
+    <div class="field" style="margin-top:12px">
+      <label for="album">アルバム</label>
+      <input id="album" type="text" autocomplete="off">
     </div>
 
     <div id="memoWrap" class="field hidden" style="margin-top:12px">
@@ -505,6 +518,10 @@
       <input id="editSong" type="text" autocomplete="off">
     </div>
     <div class="field">
+      <label for="editAlbum">アルバム</label>
+      <input id="editAlbum" type="text" autocomplete="off">
+    </div>
+    <div class="field">
       <label for="editAppleArtist">Apple Music検索用アーティスト <span style="opacity:.65;font-weight:400">（違う時だけ）</span></label>
       <input id="editAppleArtist" type="text" placeholder="例：BOOWY" autocomplete="off">
     </div>
@@ -539,7 +556,7 @@
 <div id="bulkImportModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="bulkImportTitle">
   <div class="modal">
     <div id="bulkImportTitle" class="modal-title">プレイリスト一括登録</div>
-    <div class="bulk-help">ChatGPTから返された一括登録データを貼り付けます。<br>形式：表示アーティスト［タブ］曲名［タブ］Apple Music検索用アーティスト（任意）［タブ］Apple Music検索用曲名（任意）<br>アルバム情報は保存・表示しません。</div>
+    <div class="bulk-help">ChatGPTから返された一括登録データを貼り付けます。<br>形式：表示アーティスト［タブ］曲名［タブ］Apple Music検索用アーティスト（任意）［タブ］Apple Music検索用曲名（任意）［タブ］アルバム名（任意）<br>アルバム名は任意です。空欄でも登録できます。</div>
     <textarea id="bulkImportText" class="bulk-area" placeholder="MYTRACKS_BULK_BEGIN&#10;BOØWY	B・BLUE	BOOWY	B・BLUE&#10;MYTRACKS_BULK_END"></textarea>
     <button id="bulkImportApplyBtn" class="primary full">一括登録する</button>
     <button id="bulkImportBackBtn" class="secondary full" style="margin-top:8px">戻る</button>
@@ -584,6 +601,7 @@
 
   const artistEl = document.getElementById("artist");
   const songEl = document.getElementById("song");
+  const albumEl = document.getElementById("album");
   const memoEl = document.getElementById("memo");
   const memoWrap = document.getElementById("memoWrap");
   const memoToggle = document.getElementById("memoToggle");
@@ -619,6 +637,7 @@
   const editModal = document.getElementById("editModal");
   const editArtist = document.getElementById("editArtist");
   const editSongEl = document.getElementById("editSong");
+  const editAlbum = document.getElementById("editAlbum");
   const editMemo = document.getElementById("editMemo");
   const editAppleArtist = document.getElementById("editAppleArtist");
   const editAppleSong = document.getElementById("editAppleSong");
@@ -717,6 +736,7 @@
   function resetForm() {
     artistEl.value = "";
     songEl.value = "";
+    albumEl.value = "";
     memoEl.value = "";
     editingId = null;
     addBtn.textContent = "＋ 曲を登録";
@@ -758,6 +778,7 @@
           <div class="song-text">
             <div class="song-title">${esc(item.song)}</div>
             <div class="artist">${esc(item.artist)}</div>
+            <div class="album-line">${esc(item.album || "")}</div>
           </div>
           <div class="song-actions-panel">
             <div class="song-icon-actions">
@@ -849,6 +870,7 @@
   function addOrUpdate() {
     const artist = artistEl.value.trim();
     const song = songEl.value.trim();
+    const album = albumEl.value.trim();
     const memo = memoOpen ? memoEl.value.trim() : "";
 
     if (!artist) {
@@ -869,6 +891,7 @@
           ...state.songs[idx],
           artist,
           song,
+          album,
           memo,
           sent:false
         };
@@ -888,6 +911,7 @@
       id:newId(),
       artist,
       song,
+      album,
       memo,
       sent:false,
       reviewStatus:"pending",
@@ -959,6 +983,7 @@
       const song = (cols[1] || "").trim();
       const appleArtist = (cols[2] || "").trim();
       const appleSong = (cols[3] || "").trim();
+      const album = (cols[4] || "").trim();
       if (!artist || !song) { skipped++; continue; }
       const existing = state.songs.find(x => norm(x.artist) === norm(artist) && norm(x.song) === norm(song));
       if (existing) {
@@ -969,7 +994,7 @@
       }
       state.songs.push({
         id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random(),
-        artist, song, appleArtist, appleSong, memo:"",
+        artist, song, album, appleArtist, appleSong, memo:"",
         sent:false, reviewStatus:"pending", createdAt:new Date().toISOString()
       });
       added++;
@@ -1009,6 +1034,7 @@
       lines.push("【追加・変更】");
       unsent.forEach(item => {
         lines.push(`- ${item.artist} / ${item.song}`);
+        if (item.album) lines.push(`  アルバム：${item.album}`);
         if (item.memo) lines.push(`  追記：${item.memo}`);
       });
       lines.push("");
@@ -1028,12 +1054,13 @@
       "・既存の好み情報を維持したまま今回分を追加・更新してください。",
       "・今後セットリストを頼んだときは、これまで蓄積した登録曲全体から流れを重視して組んでください。",
       "",
-      "【アプリへ正式名称を戻す場合】",
-      "アーティスト名または曲名に修正が必要なものだけ、説明とは別に次の形式で出してください。",
+      "【アプリへ反映する場合】",
+      "正式名称・Apple Music検索用表記・アルバム名のうち、変更または追加が必要な曲だけ次の形式で出してください。",
       "MYTRACKS_UPDATE_BEGIN",
-      "元アーティスト名\\t元曲名\\t正式アーティスト名\\t正式曲名",
+      "元アーティスト名\\t元曲名\\t表示アーティスト名\\t表示曲名\\tApple Music検索用アーティスト名\\tApple Music検索用曲名\\tアルバム名",
       "MYTRACKS_UPDATE_END",
-      "※区切りはタブ文字。確実に確認できたものだけ出し、推測では修正しないでください。",
+      "※区切りはタブ文字。Apple Music検索用名やアルバム名が不要・未指定の場合は空欄で構いません。",
+      "※推測では修正せず、Webで確認できたものだけ出してください。",
       "",
       "【Apple Music検索用情報の確認】",
       "・プレイリスト作成に使用する曲は、Apple Music上で実際に表示されている「アーティスト名」「曲名」「アルバム名」を確認してください。",
@@ -1105,15 +1132,19 @@
     const body = text.slice(start + begin.length, finish).trim();
     if (!body) throw new Error("empty");
 
-    const rows = body.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    const rows = body.split(/\r?\n/).map(x => x.trimEnd()).filter(Boolean);
     return rows.map(row => {
       const cols = row.split("\t").map(x => x.trim());
-      if (cols.length !== 4 || cols.some(x => !x)) throw new Error("columns");
+      if (cols.length !== 4 && cols.length !== 7) throw new Error("columns");
+      if (!cols[0] || !cols[1] || !cols[2] || !cols[3]) throw new Error("columns");
       return {
         oldArtist:cols[0],
         oldSong:cols[1],
         newArtist:cols[2],
-        newSong:cols[3]
+        newSong:cols[3],
+        appleArtist:cols.length === 7 ? cols[4] : "",
+        appleSong:cols.length === 7 ? cols[5] : "",
+        album:cols.length === 7 ? cols[6] : ""
       };
     });
   }
@@ -1157,6 +1188,9 @@
     planned.forEach(({item,update}) => {
       item.artist = update.newArtist;
       item.song = update.newSong;
+      if (update.appleArtist) item.appleArtist = update.appleArtist;
+      if (update.appleSong) item.appleSong = update.appleSong;
+      if (update.album) item.album = update.album;
       item.sent = true;
       item.reviewStatus = "confirmed";
     });
@@ -1260,6 +1294,7 @@
   duplicateRegisterBtn.addEventListener("click", () => {
     const artist = artistEl.value.trim();
     const song = songEl.value.trim();
+    const album = albumEl.value.trim();
     const memo = duplicateMemo.value.trim();
 
     if (!memo) {
