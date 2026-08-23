@@ -342,6 +342,35 @@
       transition:.2s;
       z-index:40;
     }
+    .list-bottom-space{
+      height:72px;
+    }
+    .back-to-list-top{
+      position:fixed;
+      right:18px;
+      bottom:calc(62px + env(safe-area-inset-bottom));
+      width:44px;
+      height:44px;
+      padding:0;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:24px;
+      line-height:1;
+      color:rgba(241,198,100,.72);
+      background:rgba(20,20,18,.58);
+      border:1px solid rgba(216,167,62,.34);
+      box-shadow:0 5px 14px rgba(0,0,0,.22);
+      backdrop-filter:blur(4px);
+      -webkit-backdrop-filter:blur(4px);
+      z-index:20;
+    }
+    .back-to-list-top:active{
+      background:rgba(30,29,26,.82);
+      color:var(--gold2);
+    }
+
     .toast.show{opacity:1}
 
     .modal-backdrop{
@@ -436,6 +465,7 @@
         </select>
       </div>
       <div id="songList"></div>
+      <div class="list-bottom-space" aria-hidden="true"></div>
     </div>
 
     <textarea id="output" class="output hidden" readonly></textarea>
@@ -444,6 +474,8 @@
 
   <input id="restoreInput" type="file" accept=".json,application/json" class="hidden">
 </main>
+
+<button id="backToListTopBtn" class="back-to-list-top hidden" type="button" aria-label="リスト上部へ戻る" title="リスト上部へ戻る">↑</button>
 
 
 
@@ -536,6 +568,7 @@
   const restoreInput = document.getElementById("restoreInput");
   const clearBtn = document.getElementById("clearBtn");
   const toastEl = document.getElementById("toast");
+  const backToListTopBtn = document.getElementById("backToListTopBtn");
 
   const importFromChatGPTBtn = document.getElementById("importFromChatGPTBtn");
   const chatgptImportModal = document.getElementById("chatgptImportModal");
@@ -1098,6 +1131,11 @@
   listToggleBtn.addEventListener("click", () => {
     renderList();
     listArea.classList.toggle("hidden");
+    backToListTopBtn.classList.toggle("hidden", listArea.classList.contains("hidden"));
+  });
+
+  backToListTopBtn.addEventListener("click", () => {
+    listToggleBtn.scrollIntoView({behavior:"smooth", block:"start"});
   });
 
   sortSelect.addEventListener("change", () => {
