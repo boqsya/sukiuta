@@ -977,7 +977,7 @@
     planned.forEach(({item,update}) => {
       item.artist = update.newArtist;
       item.song = update.newSong;
-      item.sent = false;
+      // 正式名称の反映だけでは送信状態を変更しない
     });
 
     saveState();
