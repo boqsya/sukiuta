@@ -543,6 +543,7 @@
     <div id="settingsTitle" class="modal-title">設定</div>
     <div class="settings-list">
       <button id="showBtn" class="primary full">ChatGPTへ渡す</button>
+      <button id="showAllBtn" class="secondary full">全曲をChatGPTへ渡す</button>
       <button id="importFromChatGPTBtn" class="secondary full">ChatGPTから反映</button>
       <button id="bulkImportBtn" class="secondary full">プレイリスト一括登録</button>
       <button id="backupBtn" class="secondary full">バックアップする</button>
@@ -613,6 +614,7 @@
   const countEl = document.getElementById("count");
   const outputEl = document.getElementById("output");
   const showBtn = document.getElementById("showBtn");
+  const showAllBtn = document.getElementById("showAllBtn");
   const settingsBtn = document.getElementById("settingsBtn");
   const settingsModal = document.getElementById("settingsModal");
   const settingsBackBtn = document.getElementById("settingsBackBtn");
@@ -1006,6 +1008,48 @@
     hideBulkImportModal();
   }
 
+  function buildAllSongsText() {
+    const songs = [...state.songs].sort((a,b) => a.createdAt.localeCompare(b.createdAt));
+    if (!songs.length) return "";
+
+    const lines = [
+      "以下はMY TRACKSに登録している全曲です。",
+      "この一覧全体を候補にして、私が指定する用途・時間・曲数などの条件に合わせてセットリストを作ってください。",
+      "曲調・テンポ・BPM・激しさ・ライブでの雰囲気・曲の始まり方や終わり方など、登録情報だけで判断しにくい場合はWebで確認してから選曲・曲順を決めてください。",
+      "",
+      "【登録曲一覧】"
+    ];
+
+    songs.forEach(item => {
+      lines.push(`- ${item.artist} / ${item.song}`);
+      if (item.album) lines.push(`  アルバム：${item.album}`);
+      if (item.memo) lines.push(`  追記：${item.memo}`);
+    });
+
+    return lines.join("\n");
+  }
+
+  async function handoffAllSongsToChatGPT() {
+    const text = buildAllSongsText();
+    if (!text) {
+      alert("登録曲がありません。");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      outputEl.value = text;
+      outputEl.classList.remove("hidden");
+      outputEl.focus();
+      outputEl.select();
+      document.execCommand("copy");
+      outputEl.classList.add("hidden");
+    }
+
+    showToast(`全${state.songs.length}曲をコピーしました`);
+  }
+
   function buildHandoffText() {
     const unsent = state.songs.filter(x => !x.sent);
     const deletes = state.pendingDeletes;
@@ -1292,6 +1336,10 @@
 
   showBtn.addEventListener("click", async () => {
     await handoffToChatGPT();
+  });
+
+  showAllBtn.addEventListener("click", async () => {
+    await handoffAllSongsToChatGPT();
   });
 
   duplicateRegisterBtn.addEventListener("click", () => {
