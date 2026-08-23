@@ -3,63 +3,157 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#111111" />
+  <meta name="theme-color" content="#0a0a0a" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <title>すきなうた</title>
   <style>
     :root{
-      --bg:#f6f6f4;
-      --card:#fff;
-      --text:#191919;
-      --muted:#777;
-      --line:#deded8;
-      --accent:#222;
-      --danger:#b3261e;
-      --green:#dff0df;
-      --greenText:#174d24;
-      --radius:18px;
+      --bg:#070707;
+      --panel:#11110f;
+      --panel2:#171715;
+      --text:#f6f1e8;
+      --muted:#aaa39a;
+      --line:#6b5323;
+      --gold:#d8a73e;
+      --gold2:#f1c664;
+      --gold3:#8f6722;
+      --danger:#d86957;
+      --radius:22px;
     }
     *{box-sizing:border-box}
+    html{background:#050505}
     body{
       margin:0;
+      min-height:100vh;
       font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
-      background:var(--bg);
       color:var(--text);
       -webkit-text-size-adjust:100%;
+      background:
+        radial-gradient(circle at 82% 8%, rgba(220,165,55,.10), transparent 20%),
+        radial-gradient(circle at 10% 74%, rgba(220,165,55,.08), transparent 22%),
+        linear-gradient(180deg,#080808 0%,#0b0b0a 55%,#050505 100%);
+      position:relative;
+      overflow-x:hidden;
     }
+    body::before,
+    body::after{
+      content:"";
+      position:fixed;
+      width:420px;
+      height:420px;
+      border-radius:50%;
+      pointer-events:none;
+      opacity:.18;
+      z-index:0;
+      background:
+        repeating-radial-gradient(circle at center,
+          rgba(255,255,255,.18) 0 1px,
+          rgba(0,0,0,0) 2px 8px),
+        radial-gradient(circle at center,#0e0e0e 0 61%,#1d1b17 62% 64%,#050505 65%);
+      box-shadow:inset 0 0 80px rgba(0,0,0,.75);
+    }
+    body::before{left:-280px;top:-120px}
+    body::after{right:-300px;bottom:-140px}
+
     .wrap{
       max-width:720px;
       margin:0 auto;
       position:relative;
-      padding:calc(18px + env(safe-area-inset-top)) 14px calc(28px + env(safe-area-inset-bottom));
+      z-index:1;
+      padding:calc(22px + env(safe-area-inset-top)) 14px calc(34px + env(safe-area-inset-bottom));
     }
-    h1{font-size:30px;margin:0 0 6px}
-    .sub{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.55}
+    .brand{
+      text-align:center;
+      margin:4px 0 22px;
+    }
+    .vinyl-mark{
+      width:72px;
+      height:72px;
+      margin:0 auto 10px;
+      border-radius:50%;
+      border:2px solid var(--gold2);
+      background:
+        radial-gradient(circle,#0a0a0a 0 7%,var(--gold2) 8% 16%,#171717 17% 22%,#070707 23% 100%),
+        repeating-radial-gradient(circle at center,rgba(255,255,255,.18) 0 1px,transparent 2px 6px);
+      box-shadow:0 0 22px rgba(216,167,62,.16);
+      position:relative;
+    }
+    .vinyl-mark::after{
+      content:"♪";
+      position:absolute;
+      right:-5px;
+      top:-14px;
+      font-size:38px;
+      line-height:1;
+      color:var(--gold2);
+      text-shadow:0 2px 8px rgba(0,0,0,.5);
+    }
+    h1{
+      font-family:Georgia,"Times New Roman",serif;
+      letter-spacing:.18em;
+      font-size:30px;
+      margin:0;
+      color:var(--gold2);
+      font-weight:700;
+      text-shadow:0 2px 12px rgba(216,167,62,.16);
+    }
+    .brand-line{
+      width:230px;
+      height:1px;
+      margin:10px auto 0;
+      background:linear-gradient(90deg,transparent,var(--gold),transparent);
+      position:relative;
+    }
+    .brand-line::after{
+      content:"〰";
+      position:absolute;
+      left:50%;
+      top:-12px;
+      transform:translateX(-50%);
+      color:var(--gold2);
+      background:#0a0a0a;
+      padding:0 8px;
+      font-size:18px;
+    }
+    .sub{
+      margin:10px auto 0;
+      max-width:520px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.55;
+      text-align:center;
+    }
+
     .card{
-      background:var(--card);
-      border:1px solid var(--line);
+      background:linear-gradient(180deg,rgba(24,24,22,.97),rgba(15,15,14,.98));
+      border:1px solid rgba(216,167,62,.62);
       border-radius:var(--radius);
       padding:16px;
       margin-bottom:14px;
+      box-shadow:
+        0 12px 28px rgba(0,0,0,.28),
+        inset 0 1px 0 rgba(255,255,255,.025);
     }
-    label{display:block;font-weight:700;font-size:15px;margin:0 0 7px}
+    label{display:block;font-weight:700;font-size:14px;margin:0 0 7px;color:#e7d6ad}
     input, textarea, select{
       width:100%;
-      border:1px solid #cfcfc8;
+      border:1px solid rgba(216,167,62,.30);
       border-radius:14px;
-      background:#fff;
+      background:rgba(7,7,7,.72);
       color:var(--text);
       font-size:18px;
       padding:13px 14px;
       outline:none;
       appearance:none;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.01);
+    }
+    input::placeholder,textarea::placeholder{color:#706d68}
+    input:focus,textarea:focus,select:focus{
+      border-color:var(--gold2);
+      box-shadow:0 0 0 2px rgba(216,167,62,.10);
     }
     textarea{min-height:84px;resize:vertical;line-height:1.5}
-    select{
-      font-size:15px;
-      padding:10px 12px;
-      background:#fff;
-    }
+    select{font-size:15px;padding:10px 12px}
     .field{margin-bottom:14px}
     .song-row{
       display:grid;
@@ -68,54 +162,61 @@
       align-items:end;
     }
     .song-row .field{margin-bottom:0}
+
     button{
       border:0;
       border-radius:14px;
       padding:14px 16px;
-      font-size:18px;
-      font-weight:700;
+      font-size:17px;
+      font-weight:800;
       cursor:pointer;
       -webkit-tap-highlight-color:transparent;
     }
     .full{width:100%}
-    .primary{background:var(--accent);color:#fff}
-    .secondary{background:#ecece8;color:var(--text)}
-    .danger{background:#fff1f0;color:var(--danger);border:1px solid #f0c8c5}
+    .primary{
+      background:linear-gradient(180deg,#efc65e,#c8912f);
+      color:#17110a;
+      border:1px solid #f6d177;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 5px 14px rgba(0,0,0,.25);
+    }
+    .secondary{
+      background:linear-gradient(180deg,#22211f,#161615);
+      color:#efe7d7;
+      border:1px solid rgba(216,167,62,.38);
+    }
+    .danger{
+      background:linear-gradient(180deg,#291713,#1b0e0c);
+      color:#f1a293;
+      border:1px solid rgba(216,105,87,.42);
+    }
     .toggle{
       width:74px;
       min-width:74px;
       white-space:nowrap;
-      background:#ecece8;
-      color:var(--text);
-      border:1px solid #d5d5cf;
+      background:#1d1c1a;
+      color:#d7c9ad;
+      border:1px solid rgba(216,167,62,.35);
       padding-left:8px;
       padding-right:8px;
     }
     .toggle.on{
-      background:var(--green);
-      color:var(--greenText);
-      border-color:#bdd8bf;
+      background:linear-gradient(180deg,#efc65e,#c8912f);
+      color:#17110a;
+      border-color:#f2cb67;
     }
     .hidden{display:none !important}
-    .section-head{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:10px;
-    }
-    .section-head h2{margin:0;font-size:20px}
-    .count{font-size:14px;color:#444}
+
     .list-toggle{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:12px;
       text-align:left;
-      background:#fff;
-      color:var(--text);
-      border:1px solid #cfcfc8;
+      color:var(--gold2);
+      background:linear-gradient(180deg,#171714,#10100f);
+      border:1px solid rgba(216,167,62,.55);
     }
+    .count{font-size:14px;color:#d5b56f}
     .sort-wrap{
       display:grid;
       grid-template-columns:auto 1fr;
@@ -123,9 +224,9 @@
       align-items:center;
       margin-bottom:8px;
     }
-    .sort-wrap span{font-size:14px;color:#555}
+    .sort-wrap span{font-size:14px;color:#b8aa90}
     .song{
-      border-top:1px solid var(--line);
+      border-top:1px solid rgba(216,167,62,.22);
       padding:13px 0;
     }
     .song:first-of-type{border-top:0}
@@ -136,9 +237,25 @@
       align-items:start;
     }
     .song-text{min-width:0}
-    .song-title{font-size:18px;font-weight:800;margin-bottom:4px;overflow-wrap:anywhere}
-    .artist{font-size:15px;color:#444;margin-bottom:6px;overflow-wrap:anywhere}
-    .memo{font-size:14px;line-height:1.55;color:#555;white-space:pre-wrap}
+    .song-title{
+      font-size:18px;
+      font-weight:800;
+      margin-bottom:4px;
+      overflow-wrap:anywhere;
+      color:#fff8e7;
+    }
+    .artist{
+      font-size:15px;
+      color:var(--gold2);
+      margin-bottom:6px;
+      overflow-wrap:anywhere;
+    }
+    .memo{
+      font-size:14px;
+      line-height:1.55;
+      color:#a9a49b;
+      white-space:pre-wrap;
+    }
     .song-icon-actions{
       display:flex;
       gap:6px;
@@ -152,61 +269,19 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      background:#f1f1ed;
-      color:#2b2b2b;
-      border:1px solid #d8d8d1;
+      background:#171714;
+      color:var(--gold2);
+      border:1px solid rgba(216,167,62,.40);
       border-radius:12px;
     }
     .delete-btn{
-      background:#fff1f0;
-      color:var(--danger);
-      border-color:#f0c8c5;
+      color:#f1a293;
+      border-color:rgba(216,105,87,.40);
+      background:#1d1110;
     }
     .edit-icon,.trash-icon{width:22px;height:22px;display:block}
     .empty{color:var(--muted);text-align:center;padding:12px 6px}
-    .output{font-size:15px;line-height:1.65;min-height:210px}
-    .backup-actions{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-      margin-top:12px;
-    }
-    .toast{
-      position:fixed;
-      left:50%;
-      bottom:calc(24px + env(safe-area-inset-bottom));
-      transform:translateX(-50%);
-      background:rgba(0,0,0,.86);
-      color:#fff;
-      padding:10px 16px;
-      border-radius:999px;
-      font-size:14px;
-      opacity:0;
-      pointer-events:none;
-      transition:.2s;
-      z-index:30;
-    }
-    .toast.show{opacity:1}
-    .modal-backdrop{
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,.48);
-      z-index:20;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:18px;
-    }
-    .modal{
-      width:min(100%,520px);
-      background:#fff;
-      border-radius:20px;
-      padding:18px;
-      box-shadow:0 18px 50px rgba(0,0,0,.25);
-    }
-    .modal-title{font-size:21px;font-weight:800;margin-bottom:8px}
-    .modal-text{font-size:15px;line-height:1.6;color:#555;margin-bottom:12px}
-    .modal textarea{min-height:96px}
+
     .settings-btn{
       position:absolute;
       top:calc(18px + env(safe-area-inset-top));
@@ -218,17 +293,67 @@
       align-items:center;
       justify-content:center;
       border-radius:50%;
-      background:#ecece8;
-      color:#333;
-      border:1px solid #d5d5cf;
+      background:#151412;
+      color:var(--gold2);
+      border:1px solid rgba(216,167,62,.5);
+      box-shadow:0 4px 12px rgba(0,0,0,.3);
     }
     .settings-btn svg{width:21px;height:21px}
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:calc(24px + env(safe-area-inset-bottom));
+      transform:translateX(-50%);
+      background:rgba(0,0,0,.92);
+      color:#fff;
+      padding:10px 16px;
+      border-radius:999px;
+      border:1px solid rgba(216,167,62,.35);
+      font-size:14px;
+      opacity:0;
+      pointer-events:none;
+      transition:.2s;
+      z-index:40;
+    }
+    .toast.show{opacity:1}
+
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.72);
+      backdrop-filter:blur(5px);
+      z-index:30;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .modal{
+      width:min(100%,520px);
+      background:linear-gradient(180deg,#1b1a18,#10100f);
+      border:1px solid rgba(216,167,62,.58);
+      border-radius:22px;
+      padding:18px;
+      box-shadow:0 22px 60px rgba(0,0,0,.52);
+    }
+    .modal-title{
+      font-size:21px;
+      font-weight:800;
+      margin-bottom:10px;
+      color:var(--gold2);
+    }
+    .modal-text{font-size:15px;line-height:1.6;color:#b8b0a2;margin-bottom:12px}
+    .modal textarea{min-height:96px}
     .settings-modal{max-width:430px}
     .settings-list{display:grid;gap:9px}
+    .modal .field:last-of-type{margin-bottom:0}
+
     @media(max-width:520px){
+      h1{font-size:27px}
       .song-row{grid-template-columns:minmax(0,1fr) 70px}
       .toggle{width:70px;min-width:70px;font-size:16px}
-      .backup-actions{grid-template-columns:1fr}
+      .brand{margin-top:8px}
     }
   </style>
 </head>
@@ -240,8 +365,13 @@
       <path d="M19.1 13.3a7.5 7.5 0 0 0 0-2.6l2-1.5-2-3.4-2.5 1a8 8 0 0 0-2.2-1.3L14 2.8h-4l-.4 2.7a8 8 0 0 0-2.2 1.3l-2.5-1-2 3.4 2 1.5a7.5 7.5 0 0 0 0 2.6l-2 1.5 2 3.4 2.5-1a8 8 0 0 0 2.2 1.3l.4 2.7h4l.4-2.7a8 8 0 0 0 2.2-1.3l2.5 1 2-3.4-2-1.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
     </svg>
   </button>
-  <h1>すきなうた</h1>
-  <p class="sub">好きな曲をためて、ChatGPTに渡すためのシンプルな記録アプリです。</p>
+
+  <div class="brand">
+    <div class="vinyl-mark" aria-hidden="true"></div>
+    <h1>MY TRACKS</h1>
+    <div class="brand-line"></div>
+    <p class="sub">好きな曲をためて、ChatGPTに渡すためのシンプルな記録アプリです。</p>
+  </div>
 
   <section class="card">
     <div class="field">
@@ -261,7 +391,7 @@
       <textarea id="memo" placeholder="例：イントロが好き、サビへの入りがかっこいい"></textarea>
     </div>
 
-    <button id="addBtn" class="primary full" style="margin-top:14px">この曲を追加</button>
+    <button id="addBtn" class="primary full" style="margin-top:14px">＋ 曲を登録</button>
   </section>
 
   <section class="card">
@@ -289,6 +419,27 @@
   <input id="restoreInput" type="file" accept=".json,application/json" class="hidden">
 </main>
 
+
+
+<div id="editModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+  <div class="modal">
+    <div id="editTitle" class="modal-title">曲を編集</div>
+    <div class="field">
+      <label for="editArtist">アーティスト</label>
+      <input id="editArtist" type="text" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="editSong">曲名</label>
+      <input id="editSong" type="text" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="editMemo">追記</label>
+      <textarea id="editMemo" placeholder="追記なしでも保存できます"></textarea>
+    </div>
+    <button id="editSaveBtn" class="primary full">変更を保存</button>
+    <button id="editBackBtn" class="secondary full" style="margin-top:8px">戻る</button>
+  </div>
+</div>
 
 <div id="settingsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
   <div class="modal settings-modal">
@@ -346,6 +497,13 @@
   const restoreInput = document.getElementById("restoreInput");
   const clearBtn = document.getElementById("clearBtn");
   const toastEl = document.getElementById("toast");
+
+  const editModal = document.getElementById("editModal");
+  const editArtist = document.getElementById("editArtist");
+  const editSongEl = document.getElementById("editSong");
+  const editMemo = document.getElementById("editMemo");
+  const editSaveBtn = document.getElementById("editSaveBtn");
+  const editBackBtn = document.getElementById("editBackBtn");
 
   const duplicateModal = document.getElementById("duplicateModal");
   const duplicateMemo = document.getElementById("duplicateMemo");
@@ -426,7 +584,7 @@
     songEl.value = "";
     memoEl.value = "";
     editingId = null;
-    addBtn.textContent = "この曲を追加";
+    addBtn.textContent = "＋ 曲を登録";
     setMemoOpen(false);
   }
 
@@ -578,12 +736,17 @@
     const item = state.songs.find(x => x.id === id);
     if (!item) return;
     editingId = id;
-    artistEl.value = item.artist;
-    songEl.value = item.song;
-    memoEl.value = item.memo || "";
-    setMemoOpen(Boolean(item.memo));
-    addBtn.textContent = "修正を保存";
-    window.scrollTo({top:0, behavior:"smooth"});
+    editArtist.value = item.artist;
+    editSongEl.value = item.song;
+    editMemo.value = item.memo || "";
+    editModal.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+  }
+
+  function hideEditModal() {
+    editModal.classList.add("hidden");
+    document.body.style.overflow = "";
+    editingId = null;
   }
 
   function deleteSong(id) {
@@ -778,6 +941,50 @@
     hideDuplicateModal();
     resetForm();
   });
+
+  editSaveBtn.addEventListener("click", () => {
+    if (!editingId) return;
+    const artist = editArtist.value.trim();
+    const song = editSongEl.value.trim();
+    const memo = editMemo.value.trim();
+
+    if (!artist) {
+      alert("アーティスト名を入れてください。");
+      editArtist.focus();
+      return;
+    }
+    if (!song) {
+      alert("曲名を入れてください。");
+      editSongEl.focus();
+      return;
+    }
+
+    const duplicate = state.songs.some(x =>
+      x.id !== editingId &&
+      norm(x.artist) === norm(artist) &&
+      norm(x.song) === norm(song)
+    );
+    if (duplicate) {
+      alert("同じアーティスト・曲名がすでに登録されています。");
+      return;
+    }
+
+    const idx = state.songs.findIndex(x => x.id === editingId);
+    if (idx >= 0) {
+      state.songs[idx] = {
+        ...state.songs[idx],
+        artist,
+        song,
+        memo,
+        sent:false
+      };
+      saveState();
+      renderList();
+    }
+    hideEditModal();
+  });
+
+  editBackBtn.addEventListener("click", hideEditModal);
 
   backupBtn.addEventListener("click", () => {
     hideSettingsModal();
