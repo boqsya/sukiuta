@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111111" />
+  <title>すきなうた</title>
+  <style>
+    :root{
+      --bg:#f6f6f4;
+      --card:#fff;
+      --text:#191919;
+      --muted:#777;
+      --line:#deded8;
+      --accent:#222;
+      --danger:#b3261e;
+      --green:#dff0df;
+      --greenText:#174d24;
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      -webkit-text-size-adjust:100%;
+    }
+    .wrap{
+      max-width:720px;
+      margin:0 auto;
+      padding:calc(18px + env(safe-area-inset-top)) 14px calc(28px + env(safe-area-inset-bottom));
+    }
+    h1{font-size:30px;margin:0 0 6px}
+    .sub{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.55}
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:16px;
+      margin-bottom:14px;
+    }
+    label{display:block;font-weight:700;font-size:15px;margin:0 0 7px}
+    input, textarea{
+      width:100%;
+      border:1px solid #cfcfc8;
+      border-radius:14px;
+      background:#fff;
+      color:var(--text);
+      font-size:18px;
+      padding:13px 14px;
+      outline:none;
+      appearance:none;
+    }
+    textarea{min-height:84px;resize:vertical;line-height:1.5}
+    .field{margin-bottom:14px}
+    .field:last-child{margin-bottom:0}
+    .song-row{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:8px;
+      align-items:end;
+    }
+    .song-row .field{margin-bottom:0}
+    button{
+      border:0;
+      border-radius:14px;
+      padding:14px 16px;
+      font-size:18px;
+      font-weight:700;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .full{width:100%}
+    .primary{background:var(--accent);color:#fff}
+    .secondary{background:#ecece8;color:var(--text)}
+    .danger{background:#fff1f0;color:var(--danger);border:1px solid #f0c8c5}
+    .toggle{
+      width:74px;
+      min-width:74px;
+      white-space:nowrap;
+      background:#ecece8;
+      color:var(--text);
+      border:1px solid #d5d5cf;
+    }
+    .toggle.on{
+      background:var(--green);
+      color:var(--greenText);
+      border-color:#bdd8bf;
+    }
+    .hidden{display:none !important}
+    .section-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:10px;
+    }
+    .section-head h2{margin:0;font-size:20px}
+    .count{color:var(--muted);font-size:14px}
+    .song{
+      border-top:1px solid var(--line);
+      padding:14px 0;
+    }
+    .song:first-of-type{border-top:0}
+    .song-title{font-size:18px;font-weight:800;margin-bottom:4px;overflow-wrap:anywhere}
+    .artist{font-size:15px;color:#444;margin-bottom:6px;overflow-wrap:anywhere}
+    .memo{font-size:14px;line-height:1.55;color:#555;white-space:pre-wrap}
+    .song-actions{display:flex;gap:8px;margin-top:10px}
+    .song-actions button{flex:1;font-size:14px;padding:10px 12px}
+    .empty{color:var(--muted);text-align:center;padding:12px 6px}
+    .output{
+      font-size:15px;
+      line-height:1.65;
+      min-height:210px;
+      margin-top:12px;
+    }
+    .actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:calc(24px + env(safe-area-inset-bottom));
+      transform:translateX(-50%);
+      background:rgba(0,0,0,.86);
+      color:#fff;
+      padding:10px 16px;
+      border-radius:999px;
+      font-size:14px;
+      opacity:0;
+      pointer-events:none;
+      transition:.2s;
+      z-index:10;
+    }
+    .toast.show{opacity:1}
+    @media(max-width:520px){
+      .song-row{grid-template-columns:1fr auto}
+      .toggle{width:70px;min-width:70px;padding:13px 8px;font-size:16px}
+      .actions{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <h1>すきなうた</h1>
+  <p class="sub">好きな曲をためて、ChatGPTに渡すためのシンプルな記録アプリです。</p>
+
+  <section class="card">
+    <div class="field">
+      <label for="artist">アーティスト</label>
+      <input id="artist" type="text" placeholder="例：バクチク" autocomplete="off">
+    </div>
+
+    <div class="song-row">
+      <div class="field">
+        <label for="song">曲名</label>
+        <input id="song" type="text" placeholder="例：ムーンライト" autocomplete="off">
+      </div>
+      <button id="memoToggle" type="button" class="toggle" aria-pressed="false">追記</button>
+    </div>
+
+    <div id="memoWrap" class="field hidden" style="margin-top:12px">
+      <textarea id="memo" placeholder="例：イントロが好き、サビへの入りがかっこいい"></textarea>
+    </div>
+
+    <button id="addBtn" class="primary full" style="margin-top:14px">この曲を追加</button>
+  </section>
+
+  <section class="card">
+    <button id="showBtn" class="primary full">ChatGPTへ渡す</button>
+
+    <div id="transferArea" class="hidden">
+      <div class="section-head" style="margin-top:16px">
+        <h2>登録した曲</h2>
+        <div id="count" class="count">0曲</div>
+      </div>
+
+      <div id="songList"></div>
+
+      <textarea id="output" class="output" readonly></textarea>
+
+      <div class="actions">
+        <button id="copyBtn" class="primary">コピー</button>
+        <button id="closeBtn" class="secondary">閉じる</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <button id="clearBtn" class="danger full">登録曲をすべて削除</button>
+  </section>
+</main>
+
+<div id="toast" class="toast">コピーしました</div>
+
+<script>
+(() => {
+  const STORAGE_KEY = "sukiuta_v1_songs";
+  let songs = loadSongs();
+  let editingId = null;
+  let memoOpen = false;
+
+  const artistEl = document.getElementById("artist");
+  const songEl = document.getElementById("song");
+  const memoEl = document.getElementById("memo");
+  const memoWrap = document.getElementById("memoWrap");
+  const memoToggle = document.getElementById("memoToggle");
+  const addBtn = document.getElementById("addBtn");
+  const showBtn = document.getElementById("showBtn");
+  const transferArea = document.getElementById("transferArea");
+  const listEl = document.getElementById("songList");
+  const countEl = document.getElementById("count");
+  const outputEl = document.getElementById("output");
+  const copyBtn = document.getElementById("copyBtn");
+  const closeBtn = document.getElementById("closeBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const toastEl = document.getElementById("toast");
+
+  function loadSongs() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveSongs() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(songs));
+  }
+
+  function esc(s) {
+    return String(s ?? "").replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[c]));
+  }
+
+  function updateAddState() {
+    const ready = artistEl.value.trim().length > 0 && songEl.value.trim().length > 0;
+    addBtn.style.opacity = ready ? "1" : "0.55";
+    addBtn.setAttribute("aria-disabled", "false");
+  }
+
+  function setMemoOpen(open) {
+    memoOpen = open;
+    memoWrap.classList.toggle("hidden", !open);
+    memoToggle.classList.toggle("on", open);
+    memoToggle.setAttribute("aria-pressed", String(open));
+    memoToggle.textContent = open ? "追記 ✓" : "追記";
+    if (open) setTimeout(() => memoEl.focus(), 0);
+  }
+
+  function buildOutput() {
+    if (!songs.length) return "登録曲はまだありません。";
+    const lines = [
+      "以下は私の好きな曲リストです。",
+      "これまでの好み情報は削除せず、この内容を追加して分析してください。",
+      "曲名・アーティスト名に表記ゆれや略称がある場合、確実に判断できるものだけ正式名称として整理してください。",
+      "判断できないものは推測せず確認してください。",
+      "",
+      "【好きな曲】"
+    ];
+    songs.forEach((item, i) => {
+      lines.push(`${String(i+1).padStart(2,"0")}. ${item.artist} / ${item.song}`);
+      if (item.memo) lines.push(`    ひとこと：${item.memo}`);
+    });
+    lines.push(
+      "",
+      "【お願い】",
+      "・この曲リストから私の音楽の好みを分析してください。",
+      "・過去に分かっている好みは削除せず、新しく分かった傾向を追加してください。",
+      "・登録済みの曲だけを使って、曲の流れを重視したセットリストを作ってください。"
+    );
+    return lines.join("\n");
+  }
+
+  function renderList() {
+    countEl.textContent = `${songs.length}曲`;
+    if (!songs.length) {
+      listEl.innerHTML = `<div class="empty">まだ曲がありません。</div>`;
+    } else {
+      listEl.innerHTML = songs.map((item, i) => `
+        <div class="song">
+          <div class="song-title">${i+1}. ${esc(item.song)}</div>
+          <div class="artist">${esc(item.artist)}</div>
+          ${item.memo ? `<div class="memo">「${esc(item.memo)}」</div>` : ""}
+          <div class="song-actions">
+            <button class="secondary edit-btn" data-id="${item.id}">編集</button>
+            <button class="danger delete-btn" data-id="${item.id}">削除</button>
+          </div>
+        </div>
+      `).join("");
+    }
+    outputEl.value = buildOutput();
+
+    document.querySelectorAll(".edit-btn").forEach(btn => {
+      btn.addEventListener("click", () => editSong(btn.dataset.id));
+    });
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+      btn.addEventListener("click", () => deleteSong(btn.dataset.id));
+    });
+  }
+
+  function resetForm() {
+    artistEl.value = "";
+    songEl.value = "";
+    memoEl.value = "";
+    editingId = null;
+    addBtn.textContent = "この曲を追加";
+    setMemoOpen(false);
+    updateAddState();
+  }
+
+  function addOrUpdate() {
+    const artist = artistEl.value.trim();
+    const song = songEl.value.trim();
+    const memo = memoOpen ? memoEl.value.trim() : "";
+
+    if (!artist) {
+      alert("アーティスト名を入れてください。");
+      artistEl.focus();
+      return;
+    }
+    if (!song) {
+      alert("曲名を入れてください。");
+      songEl.focus();
+      return;
+    }
+
+    if (editingId) {
+      const idx = songs.findIndex(x => x.id === editingId);
+      if (idx >= 0) songs[idx] = {...songs[idx], artist, song, memo};
+    } else {
+      songs.push({
+        id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()),
+        artist, song, memo,
+        createdAt:new Date().toISOString()
+      });
+    }
+
+    saveSongs();
+    resetForm();
+    if (!transferArea.classList.contains("hidden")) renderList();
+  }
+
+  function editSong(id) {
+    const item = songs.find(x => x.id === id);
+    if (!item) return;
+    editingId = id;
+    artistEl.value = item.artist;
+    songEl.value = item.song;
+    memoEl.value = item.memo || "";
+    setMemoOpen(Boolean(item.memo));
+    addBtn.textContent = "修正を保存";
+    updateAddState();
+    transferArea.classList.add("hidden");
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+
+  function deleteSong(id) {
+    const item = songs.find(x => x.id === id);
+    if (!item) return;
+    if (!confirm(`「${item.song}」を削除しますか？`)) return;
+    songs = songs.filter(x => x.id !== id);
+    saveSongs();
+    renderList();
+  }
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    setTimeout(() => toastEl.classList.remove("show"), 1400);
+  }
+
+  async function copyOutput() {
+    const text = buildOutput();
+    outputEl.value = text;
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast("コピーしました");
+    } catch {
+      outputEl.focus();
+      outputEl.select();
+      document.execCommand("copy");
+      showToast("コピーしました");
+    }
+  }
+
+  memoToggle.addEventListener("click", () => setMemoOpen(!memoOpen));
+  ["input","change","keyup","blur"].forEach(evt => {
+    artistEl.addEventListener(evt, updateAddState);
+    songEl.addEventListener(evt, updateAddState);
+  });
+  addBtn.addEventListener("click", addOrUpdate);
+
+  showBtn.addEventListener("click", () => {
+    renderList();
+    transferArea.classList.remove("hidden");
+  });
+
+  closeBtn.addEventListener("click", () => {
+    transferArea.classList.add("hidden");
+  });
+
+  copyBtn.addEventListener("click", copyOutput);
+
+  clearBtn.addEventListener("click", () => {
+    if (!songs.length) return;
+    if (!confirm("登録した曲をすべて削除しますか？")) return;
+    songs = [];
+    saveSongs();
+    resetForm();
+    if (!transferArea.classList.contains("hidden")) renderList();
+  });
+
+  updateAddState();
+  setTimeout(updateAddState, 0);
+})();
+</script>
+</body>
+</html>
