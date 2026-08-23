@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#111111" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <title>すきなうた</title>
   <style>
     :root{
@@ -29,6 +30,7 @@
     .wrap{
       max-width:720px;
       margin:0 auto;
+      position:relative;
       padding:calc(18px + env(safe-area-inset-top)) 14px calc(28px + env(safe-area-inset-bottom));
     }
     h1{font-size:30px;margin:0 0 6px}
@@ -205,6 +207,24 @@
     .modal-title{font-size:21px;font-weight:800;margin-bottom:8px}
     .modal-text{font-size:15px;line-height:1.6;color:#555;margin-bottom:12px}
     .modal textarea{min-height:96px}
+    .settings-btn{
+      position:absolute;
+      top:calc(18px + env(safe-area-inset-top));
+      right:16px;
+      width:38px;
+      height:38px;
+      padding:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:50%;
+      background:#ecece8;
+      color:#333;
+      border:1px solid #d5d5cf;
+    }
+    .settings-btn svg{width:21px;height:21px}
+    .settings-modal{max-width:430px}
+    .settings-list{display:grid;gap:9px}
     @media(max-width:520px){
       .song-row{grid-template-columns:minmax(0,1fr) 70px}
       .toggle{width:70px;min-width:70px;font-size:16px}
@@ -214,6 +234,12 @@
 </head>
 <body>
 <main class="wrap">
+  <button id="settingsBtn" class="settings-btn" aria-label="設定" title="設定">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 8.2A3.8 3.8 0 1 0 12 15.8 3.8 3.8 0 0 0 12 8.2Z" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M19.1 13.3a7.5 7.5 0 0 0 0-2.6l2-1.5-2-3.4-2.5 1a8 8 0 0 0-2.2-1.3L14 2.8h-4l-.4 2.7a8 8 0 0 0-2.2 1.3l-2.5-1-2 3.4 2 1.5a7.5 7.5 0 0 0 0 2.6l-2 1.5 2 3.4 2.5-1a8 8 0 0 0 2.2 1.3l.4 2.7h4l.4-2.7a8 8 0 0 0 2.2-1.3l2.5 1 2-3.4-2-1.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+    </svg>
+  </button>
   <h1>すきなうた</h1>
   <p class="sub">好きな曲をためて、ChatGPTに渡すためのシンプルな記録アプリです。</p>
 
@@ -258,24 +284,24 @@
 
     <textarea id="output" class="output hidden" readonly></textarea>
 
-    <button id="showBtn" class="primary full" style="margin-top:12px">ChatGPTへ渡す</button>
   </section>
 
-  <section class="card">
-    <div class="section-head">
-      <h2>バックアップ</h2>
-    </div>
-    <div class="backup-actions">
-      <button id="backupBtn" class="secondary">バックアップ保存</button>
-      <button id="restoreBtn" class="secondary">バックアップ復元</button>
-    </div>
-    <input id="restoreInput" type="file" accept=".json,application/json" class="hidden">
-  </section>
-
-  <section class="card">
-    <button id="clearBtn" class="danger full">登録曲をすべて削除</button>
-  </section>
+  <input id="restoreInput" type="file" accept=".json,application/json" class="hidden">
 </main>
+
+
+<div id="settingsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+  <div class="modal settings-modal">
+    <div id="settingsTitle" class="modal-title">設定</div>
+    <div class="settings-list">
+      <button id="showBtn" class="primary full">ChatGPTへ渡す</button>
+      <button id="backupBtn" class="secondary full">バックアップする</button>
+      <button id="restoreBtn" class="secondary full">バックアップを復元</button>
+      <button id="clearBtn" class="danger full">全曲削除</button>
+      <button id="settingsBackBtn" class="secondary full">戻る</button>
+    </div>
+  </div>
+</div>
 
 <div id="duplicateModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="dupTitle">
   <div class="modal">
@@ -312,6 +338,9 @@
   const countEl = document.getElementById("count");
   const outputEl = document.getElementById("output");
   const showBtn = document.getElementById("showBtn");
+  const settingsBtn = document.getElementById("settingsBtn");
+  const settingsModal = document.getElementById("settingsModal");
+  const settingsBackBtn = document.getElementById("settingsBackBtn");
   const backupBtn = document.getElementById("backupBtn");
   const restoreBtn = document.getElementById("restoreBtn");
   const restoreInput = document.getElementById("restoreInput");
@@ -469,6 +498,16 @@
       norm(x.artist) === norm(artist) &&
       norm(x.song) === norm(song)
     );
+  }
+
+  function showSettingsModal() {
+    settingsModal.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+  }
+
+  function hideSettingsModal() {
+    settingsModal.classList.add("hidden");
+    document.body.style.overflow = "";
   }
 
   function showDuplicateModal() {
@@ -703,7 +742,12 @@
     renderList();
   });
 
-  showBtn.addEventListener("click", handoffToChatGPT);
+  settingsBtn.addEventListener("click", showSettingsModal);
+  settingsBackBtn.addEventListener("click", hideSettingsModal);
+
+  showBtn.addEventListener("click", async () => {
+    await handoffToChatGPT();
+  });
 
   duplicateRegisterBtn.addEventListener("click", () => {
     const artist = artistEl.value.trim();
@@ -735,8 +779,14 @@
     resetForm();
   });
 
-  backupBtn.addEventListener("click", backupData);
-  restoreBtn.addEventListener("click", () => restoreInput.click());
+  backupBtn.addEventListener("click", () => {
+    hideSettingsModal();
+    backupData();
+  });
+  restoreBtn.addEventListener("click", () => {
+    hideSettingsModal();
+    restoreInput.click();
+  });
   restoreInput.addEventListener("change", () => {
     const file = restoreInput.files && restoreInput.files[0];
     if (file) restoreData(file);
@@ -750,6 +800,7 @@
     saveState();
     resetForm();
     renderList();
+    hideSettingsModal();
   });
 
   renderList();
