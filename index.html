@@ -371,6 +371,9 @@
       color:var(--gold2);
     }
 
+    .search-name-hint{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.35}
+    .bulk-help{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:10px}
+    .bulk-area{min-height:190px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
     .toast.show{opacity:1}
 
     .modal-backdrop{
@@ -502,6 +505,14 @@
       <input id="editSong" type="text" autocomplete="off">
     </div>
     <div class="field">
+      <label for="editAppleArtist">Apple Music検索用アーティスト <span style="opacity:.65;font-weight:400">（違う時だけ）</span></label>
+      <input id="editAppleArtist" type="text" placeholder="例：BOOWY" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="editAppleSong">Apple Music検索用曲名 <span style="opacity:.65;font-weight:400">（違う時だけ）</span></label>
+      <input id="editAppleSong" type="text" placeholder="通常は空欄でOK" autocomplete="off">
+    </div>
+    <div class="field">
       <label for="editMemo">追記</label>
       <textarea id="editMemo" placeholder="追記なしでも保存できます"></textarea>
     </div>
@@ -516,11 +527,22 @@
     <div class="settings-list">
       <button id="showBtn" class="primary full">ChatGPTへ渡す</button>
       <button id="importFromChatGPTBtn" class="secondary full">ChatGPTから反映</button>
+      <button id="bulkImportBtn" class="secondary full">プレイリスト一括登録</button>
       <button id="backupBtn" class="secondary full">バックアップする</button>
       <button id="restoreBtn" class="secondary full">バックアップを復元</button>
       <button id="clearBtn" class="danger full">全曲削除</button>
       <button id="settingsBackBtn" class="secondary full">戻る</button>
     </div>
+  </div>
+</div>
+
+<div id="bulkImportModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="bulkImportTitle">
+  <div class="modal">
+    <div id="bulkImportTitle" class="modal-title">プレイリスト一括登録</div>
+    <div class="bulk-help">ChatGPTから返された一括登録データを貼り付けます。<br>形式：表示アーティスト［タブ］曲名［タブ］Apple Music検索用アーティスト（任意）［タブ］Apple Music検索用曲名（任意）<br>アルバム情報は保存・表示しません。</div>
+    <textarea id="bulkImportText" class="bulk-area" placeholder="MYTRACKS_BULK_BEGIN&#10;BOØWY	B・BLUE	BOOWY	B・BLUE&#10;MYTRACKS_BULK_END"></textarea>
+    <button id="bulkImportApplyBtn" class="primary full">一括登録する</button>
+    <button id="bulkImportBackBtn" class="secondary full" style="margin-top:8px">戻る</button>
   </div>
 </div>
 
@@ -541,8 +563,21 @@
   const STORAGE_KEY = "sukiuta_v2_data";
   const LEGACY_KEY = "sukiuta_v1_songs";
   const STATUS_RESET_KEY = "sukiuta_status_reset_v1";
+  const BOOWY_UNSENT_KEY = "sukiuta_boowy_unsent_v1";
 
   let state = loadState();
+  if (!localStorage.getItem(BOOWY_UNSENT_KEY)) {
+    let changed = false;
+    state.songs.forEach(item => {
+      if (norm(item.artist) === norm("BOØWY")) {
+        item.sent = false;
+        item.reviewStatus = "pending";
+        changed = true;
+      }
+    });
+    if (changed) saveState();
+    localStorage.setItem(BOOWY_UNSENT_KEY, "1");
+  }
   let editingId = null;
   let memoOpen = false;
   let sortMode = "registered";
@@ -571,6 +606,11 @@
   const backToListTopBtn = document.getElementById("backToListTopBtn");
 
   const importFromChatGPTBtn = document.getElementById("importFromChatGPTBtn");
+  const bulkImportBtn = document.getElementById("bulkImportBtn");
+  const bulkImportModal = document.getElementById("bulkImportModal");
+  const bulkImportText = document.getElementById("bulkImportText");
+  const bulkImportApplyBtn = document.getElementById("bulkImportApplyBtn");
+  const bulkImportBackBtn = document.getElementById("bulkImportBackBtn");
   const chatgptImportModal = document.getElementById("chatgptImportModal");
   const chatgptImportText = document.getElementById("chatgptImportText");
   const chatgptImportApplyBtn = document.getElementById("chatgptImportApplyBtn");
@@ -580,6 +620,8 @@
   const editArtist = document.getElementById("editArtist");
   const editSongEl = document.getElementById("editSong");
   const editMemo = document.getElementById("editMemo");
+  const editAppleArtist = document.getElementById("editAppleArtist");
+  const editAppleSong = document.getElementById("editAppleSong");
   const editSaveBtn = document.getElementById("editSaveBtn");
   const editBackBtn = document.getElementById("editBackBtn");
 
@@ -604,6 +646,8 @@
             id: x.id || newId(),
             artist: String(x.artist || ""),
             song: String(x.song || ""),
+            appleArtist: String(x.appleArtist || ""),
+            appleSong: String(x.appleSong || ""),
             memo: String(x.memo || ""),
             sent: shouldResetStatuses ? false : Boolean(x.sent),
             reviewStatus: shouldResetStatuses
@@ -631,6 +675,8 @@
               id: x.id || newId(),
               artist: String(x.artist || ""),
               song: String(x.song || ""),
+              appleArtist: String(x.appleArtist || ""),
+              appleSong: String(x.appleSong || ""),
               memo: String(x.memo || ""),
               sent: false,
               reviewStatus: "pending",
@@ -858,6 +904,8 @@
     editingId = id;
     editArtist.value = item.artist;
     editSongEl.value = item.song;
+    editAppleArtist.value = item.appleArtist || "";
+    editAppleSong.value = item.appleSong || "";
     editMemo.value = item.memo || "";
     editModal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
@@ -885,6 +933,50 @@
     saveState();
     if (editingId === id) resetForm();
     renderList();
+  }
+
+  function showBulkImportModal() {
+    settingsModal.classList.add("hidden");
+    bulkImportText.value = "";
+    bulkImportModal.classList.remove("hidden");
+  }
+
+  function hideBulkImportModal() {
+    bulkImportModal.classList.add("hidden");
+    settingsModal.classList.remove("hidden");
+  }
+
+  function applyBulkImport() {
+    const raw = bulkImportText.value.trim();
+    if (!raw) { alert("一括登録データを貼り付けてください。"); return; }
+    const lines = raw.split(/\r?\n/).map(x => x.trimEnd())
+      .filter(x => x && x !== "MYTRACKS_BULK_BEGIN" && x !== "MYTRACKS_BULK_END");
+    let added = 0, skipped = 0;
+    for (const line of lines) {
+      const cols = line.split("\t");
+      if (cols.length < 2) { skipped++; continue; }
+      const artist = (cols[0] || "").trim();
+      const song = (cols[1] || "").trim();
+      const appleArtist = (cols[2] || "").trim();
+      const appleSong = (cols[3] || "").trim();
+      if (!artist || !song) { skipped++; continue; }
+      const existing = state.songs.find(x => norm(x.artist) === norm(artist) && norm(x.song) === norm(song));
+      if (existing) {
+        if (appleArtist) existing.appleArtist = appleArtist;
+        if (appleSong) existing.appleSong = appleSong;
+        skipped++;
+        continue;
+      }
+      state.songs.push({
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random(),
+        artist, song, appleArtist, appleSong, memo:"",
+        sent:false, reviewStatus:"pending", createdAt:new Date().toISOString()
+      });
+      added++;
+    }
+    saveState(); renderList();
+    alert(`${added}曲を新規登録しました。${skipped ? `\n${skipped}行は既存曲の検索名更新または形式不備でした。` : ""}`);
+    hideBulkImportModal();
   }
 
   function buildHandoffText() {
@@ -1103,6 +1195,8 @@
             id:x.id || newId(),
             artist:String(x.artist || ""),
             song:String(x.song || ""),
+            appleArtist:String(x.appleArtist || ""),
+            appleSong:String(x.appleSong || ""),
             memo:String(x.memo || ""),
             sent:Boolean(x.sent),
             reviewStatus:["pending","confirmed","unconfirmed"].includes(x.reviewStatus)
@@ -1181,6 +1275,10 @@
     resetForm();
   });
 
+  bulkImportBtn.addEventListener("click", showBulkImportModal);
+  bulkImportBackBtn.addEventListener("click", hideBulkImportModal);
+  bulkImportApplyBtn.addEventListener("click", applyBulkImport);
+
   importFromChatGPTBtn.addEventListener("click", showChatGPTImportModal);
   chatgptImportBackBtn.addEventListener("click", hideChatGPTImportModal);
   chatgptImportApplyBtn.addEventListener("click", applyChatGPTUpdates);
@@ -1189,6 +1287,8 @@
     if (!editingId) return;
     const artist = editArtist.value.trim();
     const song = editSongEl.value.trim();
+    const appleArtist = editAppleArtist.value.trim();
+    const appleSong = editAppleSong.value.trim();
     const memo = editMemo.value.trim();
 
     if (!artist) {
@@ -1218,6 +1318,8 @@
         ...state.songs[idx],
         artist,
         song,
+        appleArtist,
+        appleSong,
         memo,
         sent:false
       };
